@@ -1,0 +1,4 @@
+dist
+public/plotly.js
+package-lock.json
+*.md

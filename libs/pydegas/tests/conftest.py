@@ -4,7 +4,6 @@ import hashlib
 import importlib
 import json
 import sys
-from functools import partial
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -57,14 +56,13 @@ def assert_same_distribution():
 def reference():
     """Import the real reference tree; never substitute pydegas for the oracle.
 
-    The reference omits functools.partial in its assignment and truncation modules.
-    Supply that standard-library import in memory only; leave algorithms and files
-    unchanged. See tests/README.md for the scope of this compatibility shim.
+    The reference is the DeGAS repository, checked out as the git submodule
+    reference/DeGAS at the revision recorded in reference_manifest.json.
     """
     pytest.importorskip("torch")
-    source = Path(__file__).resolve().parents[3] / "DeGAS" / "src"
+    source = Path(__file__).resolve().parents[3] / "reference" / "DeGAS" / "src"
     if not (source / "libSOGA.py").is_file():
-        pytest.fail(f"Reference source missing at {source}; run from the monorepo or use -m 'not reference'.")
+        pytest.skip(f"Reference source missing at {source}; run 'git submodule update --init'.")
     manifest = json.loads(Path(__file__).with_name("reference_manifest.json").read_text())
     for name, expected_hash in manifest["files"].items():
         actual_hash = hashlib.sha256((source / name).read_bytes()).hexdigest()
@@ -87,7 +85,4 @@ def reference():
             module = sys.modules[Path(name).stem]
             assert module.__file__ is not None, f"Reference module has no source path: {name}"
             assert Path(module.__file__).resolve() == source / name, f"Wrong reference module imported: {name}"
-        for key in ("update", "truncate"):
-            if not hasattr(modules[key], "partial"):
-                patch.setattr(modules[key], "partial", partial, raising=False)
         yield SimpleNamespace(**modules)

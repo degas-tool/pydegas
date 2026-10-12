@@ -1,4 +1,4 @@
-"""Differential tests against DeGAS/src, not copied expected output or pydegas helpers."""
+"""Differential tests against reference/DeGAS/src, not copied expected output or pydegas helpers."""
 
 from __future__ import annotations
 

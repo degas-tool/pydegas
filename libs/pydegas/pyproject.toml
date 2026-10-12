@@ -33,4 +33,4 @@ packages = ["src/pydegas"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
-markers = ["reference: compares against the original DeGAS/src implementation in the monorepo"]
+markers = ["reference: compares against the DeGAS reference implementation in reference/DeGAS"]

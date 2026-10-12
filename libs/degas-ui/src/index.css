@@ -1,0 +1,37 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  font-family: Menlo, Consolas, 'Courier New', monospace;
+}
+
+body {
+  background: var(--bg-page);
+  color: var(--text-primary);
+  transition: background 0.2s, color 0.2s;
+}
+
+:root {
+  --bg-page:        #f0ede8;
+  --bg-surface:     #ffffff;
+  --bg-results:     #fafaf9;
+  --border:         #e2ddd8;
+  --text-primary:   #1a1a1a;
+  --text-muted:     #999;
+  --btn-bg:         #ffffff;
+  --btn-hover:      #f0ede8;
+  --btn-border:     #d4cfc9;
+}
+
+:root[data-theme='dark'] {
+  --bg-page:        #0d0d0d;
+  --bg-surface:     #111111;
+  --bg-results:     #0a0a0a;
+  --border:         #1e1e1e;
+  --text-primary:   #e8e6e0;
+  --text-muted:     #444;
+  --btn-bg:         #1a1a1a;
+  --btn-hover:      #222;
+  --btn-border:     #2a2a2a;
+}

@@ -479,6 +479,7 @@ export default function App() {
             setCurrentSessionId(null);
           }
         }}
+        onActionError={(message) => showToast(message, 5000)}
         onSelectSession={(id) => {
           const url = new URL(window.location.href);
           url.searchParams.set("s", id);

@@ -45,12 +45,17 @@ function StatusDot({
   );
 }
 
+function errorText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 interface Props {
   open: boolean;
   currentSessionId: string | null;
   onClose: () => void;
   onSelectSession: (id: string) => void;
   onSessionDeleted: (id: string) => void;
+  onActionError: (message: string) => void;
 }
 
 export function HistoryPanel({
@@ -59,6 +64,7 @@ export function HistoryPanel({
   onClose,
   onSelectSession,
   onSessionDeleted,
+  onActionError,
 }: Props) {
   const [summaries, setSummaries] = useState<SessionSummary[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -114,8 +120,8 @@ export function HistoryPanel({
         (prev) =>
           prev?.map((s) => (s.id === id ? { ...s, name: trimmed } : s)) ?? null,
       );
-    } catch {
-      /* empty */
+    } catch (err) {
+      onActionError(`Could not rename the session: ${errorText(err)}`);
     }
   }
 
@@ -124,7 +130,8 @@ export function HistoryPanel({
     if (!token) return;
     try {
       await deleteSession(id, token);
-    } catch {
+    } catch (err) {
+      onActionError(`Could not delete the session: ${errorText(err)}`);
       return;
     }
     removeOwnerToken(id);

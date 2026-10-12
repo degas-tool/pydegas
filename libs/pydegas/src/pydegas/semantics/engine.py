@@ -162,7 +162,7 @@ def soga(
                 if isinstance(child, nodes.StateNode) and child.cond is False:
                     update_child(child, current_dist, current_p, current_trunc, exec_queue)
 
-    # if state checks wheter cond!=None. If yes, truncates to current_trunc, eventually negating it. In any case applies the rule in expr. Appends the distribution in the next merge node or calls recursively on children. If child is loop node increments its idx.
+    # if state checks whether cond!=None. If yes, truncates to current_trunc, eventually negating it. In any case applies the rule in expr. Appends the distribution in the next merge node or calls recursively on children. If child is loop node increments its idx.
     if isinstance(node, nodes.StateNode):
         if node.cond is not None and current_trunc is not None:
             if node.cond is False:

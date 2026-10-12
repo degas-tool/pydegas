@@ -194,6 +194,8 @@ def test_program_syntax_error_is_a_setup_error(client: TestClient) -> None:
         ({"trajectories": [[16.0, 15.5, 15.0]], "indices": ["a"]}, "binding 'indices' must be a list of integers."),
         ({"trajectories": [16.0, 15.5], "indices": [0]}, "binding 'trajectories' must be a 2-D array."),
         ({"trajectories": 3, "indices": [0]}, "binding 'trajectories' must be a 2-D array."),
+        ({"trajectories": [[16.0, 15.5, 15.0]], "indices": [1.5]}, "binding 'indices' must be a list of integers."),
+        ({"trajectories": [[16.0, 15.5, 15.0]], "indices": [True]}, "binding 'indices' must be a list of integers."),
     ],
 )
 def test_malformed_custom_loss_bindings_are_setup_errors(
@@ -212,12 +214,32 @@ def test_malformed_custom_loss_bindings_are_setup_errors(
     assert_setup_error(frames, fragment)
 
 
-def test_malformed_builtin_trajectories_are_a_setup_error(client: TestClient) -> None:
-    request = {**RUN_REQUEST, "loss_kwargs": {"trajectories": [1.0, 2.0], "indices": [0]}}
+@pytest.mark.parametrize(
+    ("loss_kwargs", "fragment"),
+    [
+        ({"trajectories": [1.0, 2.0], "indices": [0]}, "trajectories must be a 2-D array."),
+        ({"trajectories": 3, "indices": [0]}, "trajectories must be a 2-D array."),
+        ({"trajectories": [[16.0, 15.5, 15.0]], "indices": [0.5]}, "indices must be a list of integers."),
+        ({"trajectories": [[16.0, 15.5, 15.0]], "indices": 1}, "indices must be a list of integers."),
+    ],
+)
+def test_malformed_builtin_loss_arguments_are_setup_errors(
+    client: TestClient, loss_kwargs: dict[str, Any], fragment: str
+) -> None:
+    request = {**RUN_REQUEST, "loss_kwargs": loss_kwargs}
 
     frames = run_frames(client, request)
 
-    assert_setup_error(frames, "trajectories must be a 2-D array.")
+    assert_setup_error(frames, fragment)
+
+
+def test_builtin_signal_error_accepts_integral_float_time_steps(client: TestClient) -> None:
+    request = {**RUN_REQUEST, "loss_function": "signal_error", "loss_kwargs": {"target": 18, "time_steps": 3.0}}
+
+    frames = run_frames(client, request)
+
+    assert frames[0]["type"] == "start"
+    assert frames[-1]["type"] == "end"
 
 
 def test_oversized_trajectories_are_a_setup_error(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:

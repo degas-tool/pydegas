@@ -222,8 +222,26 @@ def _trajectory_tensor(label: str, raw: Any, limits: OptimizationLimitsSettings)
     return torch.tensor(raw, dtype=torch.float64)
 
 
-def _coerce_binding(name: str, type_ann: str | None, raw: Any, limits: OptimizationLimitsSettings) -> Any:
-    label = f"binding '{name}'"
+_SCHEMA_ANNOTATIONS = {"float[][]": "traj_set", "int[]": "index_list", "float": "scalar", "int": "int"}
+
+
+def _as_int(value: Any) -> int:
+    if isinstance(value, bool):
+        raise TypeError(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    raise TypeError(value)
+
+
+def _as_float(value: Any) -> float:
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise TypeError(value)
+    return float(value)
+
+
+def _coerce_binding(label: str, type_ann: str | None, raw: Any, limits: OptimizationLimitsSettings) -> Any:
     if type_ann == "traj_set":
         return _trajectory_tensor(label, raw, limits)
     expected = _BINDING_EXPECTATIONS.get(type_ann or "")
@@ -234,10 +252,10 @@ def _coerce_binding(name: str, type_ann: str | None, raw: Any, limits: Optimizat
         raise invalid
     try:
         if type_ann == "index_list":
-            return [int(x) for x in raw]
+            return [_as_int(x) for x in raw]
         if type_ann == "scalar":
-            return torch.tensor(float(raw), dtype=torch.float64)
-        return int(raw)
+            return torch.tensor(_as_float(raw), dtype=torch.float64)
+        return _as_int(raw)
     except (TypeError, ValueError) as e:
         raise invalid from e
 
@@ -252,15 +270,18 @@ def _build_loss(body: OptimizationRequest, limits: OptimizationLimitsSettings) -
             raw = body.loss_bindings.get(name)
             if raw is None:
                 continue
-            coerced[name] = _coerce_binding(name, param["type"], raw, limits)
+            coerced[name] = _coerce_binding(f"binding '{name}'", param["type"], raw, limits)
         return compile_loss(body.loss_source, **coerced)
 
     if body.loss_function is None:
         raise ValueError("Either loss_function or loss_source must be provided.")
     loss_kwargs = dict(body.loss_kwargs)
-    trajectories = loss_kwargs.get("trajectories")
-    if isinstance(trajectories, list):
-        loss_kwargs["trajectories"] = _trajectory_tensor("trajectories", trajectories, limits)
+    for param in LOSS_PARAM_SCHEMA.get(body.loss_function, []):
+        name = str(param["name"])
+        if loss_kwargs.get(name) is not None:
+            loss_kwargs[name] = _coerce_binding(
+                name, _SCHEMA_ANNOTATIONS.get(str(param["type"])), loss_kwargs[name], limits
+            )
     return get_loss(body.loss_function, **loss_kwargs)
 
 

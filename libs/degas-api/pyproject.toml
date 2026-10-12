@@ -1,6 +1,6 @@
 [project]
 name = "degas-api"
-version = "0.0.0"
+version = "0.0.1"
 description = "FastAPI service that streams pydegas optimization runs over a WebSocket and stores them as sessions."
 readme = "README.md"
 authors = [{ name = "Oguzhan Merttürk" }, { name = "Francesca Randone" }]

@@ -46,13 +46,9 @@ class OptimizationRateLimiter:
             )
         )
         if acquired:
-            logger.debug(
-                "concurrency slot acquired; max={max}", max=self._max_concurrent
-            )
+            logger.debug("concurrency slot acquired; max={max}", max=self._max_concurrent)
         else:
-            logger.warning(
-                "concurrency limit reached; max={max}", max=self._max_concurrent
-            )
+            logger.warning("concurrency limit reached; max={max}", max=self._max_concurrent)
         return acquired
 
     async def reset_slots(self) -> None:
@@ -90,9 +86,7 @@ class OptimizationRateLimiter:
             await self._redis.zrem(key, member)
             oldest = await self._redis.zrange(key, 0, 0, withscores=True)
             if oldest:
-                retry_after = (
-                    int(oldest[0][1] + self._rate_limit_window_seconds - now) + 1
-                )
+                retry_after = int(oldest[0][1] + self._rate_limit_window_seconds - now) + 1
             else:
                 retry_after = self._rate_limit_window_seconds
             logger.warning(
@@ -106,6 +100,4 @@ class OptimizationRateLimiter:
         return True, 0
 
     async def undo_rate_limit_entry(self, client_ip: str) -> None:
-        await self._redis.zremrangebyrank(
-            f"rate_limit:optimization:{client_ip}", -1, -1
-        )
+        await self._redis.zremrangebyrank(f"rate_limit:optimization:{client_ip}", -1, -1)

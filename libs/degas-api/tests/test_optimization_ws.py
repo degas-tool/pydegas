@@ -47,9 +47,7 @@ def test_run_without_dist_summary(client: TestClient) -> None:
 
 
 def test_run_reports_convergence(client: TestClient) -> None:
-    frames = run_frames(
-        client, {**RUN_REQUEST, "n_steps": 10, "tolerance": 1e9, "patience": 1}
-    )
+    frames = run_frames(client, {**RUN_REQUEST, "n_steps": 10, "tolerance": 1e9, "patience": 1})
 
     steps = [frame for frame in frames if frame["type"] == "step"]
     assert len(steps) == 2
@@ -222,9 +220,7 @@ def test_malformed_builtin_trajectories_are_a_setup_error(client: TestClient) ->
     assert_setup_error(frames, "trajectories must be a 2-D array.")
 
 
-def test_oversized_trajectories_are_a_setup_error(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_oversized_trajectories_are_a_setup_error(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(app_settings.optimization_limits, "max_trajectory_rows", 1)
     request = {
         **RUN_REQUEST,
@@ -241,9 +237,7 @@ def test_empty_loss_source_needs_a_loss_function(client: TestClient) -> None:
 
     frames = run_frames(client, request)
 
-    assert_setup_error(
-        frames, "Invalid request: Either loss_function or loss_source must be provided."
-    )
+    assert_setup_error(frames, "Invalid request: Either loss_function or loss_source must be provided.")
 
 
 def test_validation_errors_are_listed_per_field(client: TestClient) -> None:

@@ -5,7 +5,9 @@ export function setOwnerToken(id: string, token: string): void {
     const map = JSON.parse(localStorage.getItem(OWNER_KEY) ?? "{}");
     map[id] = token;
     localStorage.setItem(OWNER_KEY, JSON.stringify(map));
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
 }
 
 export function getOwnerToken(id: string): string | null {
@@ -22,5 +24,7 @@ export function removeOwnerToken(id: string): void {
     const map = JSON.parse(localStorage.getItem(OWNER_KEY) ?? "{}");
     delete map[id];
     localStorage.setItem(OWNER_KEY, JSON.stringify(map));
-  } catch { /* empty */ }
+  } catch {
+    /* empty */
+  }
 }

@@ -105,9 +105,7 @@ def create_session(body: CreateSessionRequest, db: DbSession) -> SessionCreateRe
 
 
 @router.get("", response_model=list[SessionSummary])
-def list_sessions(
-    db: DbSession, limit: Annotated[int, Query(ge=1, le=100)] = 50
-) -> list[SessionSummary]:
+def list_sessions(db: DbSession, limit: Annotated[int, Query(ge=1, le=100)] = 50) -> list[SessionSummary]:
     now = degas_now()
     rows = db.exec(
         select(OptimizationSession)

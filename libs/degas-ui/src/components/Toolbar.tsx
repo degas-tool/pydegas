@@ -40,7 +40,9 @@ function parseJson(s: string): unknown {
 }
 
 function stringify(values: Record<string, unknown>): Record<string, string> {
-  return Object.fromEntries(Object.entries(values).map(([k, v]) => [k, String(v)]));
+  return Object.fromEntries(
+    Object.entries(values).map(([k, v]) => [k, String(v)]),
+  );
 }
 
 const SELECT: React.CSSProperties = {
@@ -115,7 +117,8 @@ const LOSS_ARG_TIP: Record<string, string> = {
 
 const DSL_TYPE_TIP: Record<string, string> = {
   traj_set: "Trajectory matrix (CSV) bound to this traj_set parameter.",
-  index_list: "Comma-separated integer indices bound to this index_list parameter.",
+  index_list:
+    "Comma-separated integer indices bound to this index_list parameter.",
   scalar: "Scalar value bound to this parameter.",
   int: "Integer value bound to this parameter.",
 };
@@ -160,8 +163,14 @@ function CsvUpload({ shape, disabled, onLoad }: CsvUploadProps) {
 
   return (
     <div
-      onDragOver={(e) => { e.preventDefault(); if (!disabled) setDragging(true); }}
-      onDragEnter={(e) => { e.preventDefault(); if (!disabled) setDragging(true); }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        if (!disabled) setDragging(true);
+      }}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        if (!disabled) setDragging(true);
+      }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       style={{
@@ -193,7 +202,11 @@ function CsvUpload({ shape, disabled, onLoad }: CsvUploadProps) {
           }}
         />
       )}
-      {shape ? `${shape[0]} × ${shape[1]} ✓` : dragging ? "drop CSV" : "drag / click"}
+      {shape
+        ? `${shape[0]} × ${shape[1]} ✓`
+        : dragging
+          ? "drop CSV"
+          : "drag / click"}
     </div>
   );
 }
@@ -256,16 +269,20 @@ export function Toolbar({
   >({});
 
   const [dslBindings, setDslBindings] = useState<Record<string, string>>({});
-  const [dslTrajShapes, setDslTrajShapes] = useState<Record<string, [number, number]>>({});
+  const [dslTrajShapes, setDslTrajShapes] = useState<
+    Record<string, [number, number]>
+  >({});
 
   const [lastProgram, setLastProgram] = useState(program);
   if (program !== lastProgram) {
     setLastProgram(program);
     const matched = EXAMPLES.find((ex) => ex.program.trim() === program.trim());
     setSelectedExample(matched ? matched.label : "Custom");
-    const names = [...new Set(
-      [...program.matchAll(/_([a-zA-Z][a-zA-Z0-9]*)/g)].map((m) => m[1])
-    )];
+    const names = [
+      ...new Set(
+        [...program.matchAll(/_([a-zA-Z][a-zA-Z0-9]*)/g)].map((m) => m[1]),
+      ),
+    ];
     const next: Record<string, string> = {};
     for (const name of names) next[name] = paramValues[name] ?? "0";
     setParamValues(next);
@@ -342,7 +359,11 @@ export function Toolbar({
       for (const p of dslParams) {
         const raw = dslBindings[p.name] ?? "";
         if (p.type === "traj_set") {
-          try { parsedBindings[p.name] = JSON.parse(raw); } catch { /* skip */ }
+          try {
+            parsedBindings[p.name] = JSON.parse(raw);
+          } catch {
+            /* skip */
+          }
         } else if (p.type === "index_list") {
           parsedBindings[p.name] = raw.split(",").map((s) => toInt(s.trim()));
         } else if (p.type === "scalar") {
@@ -350,10 +371,19 @@ export function Toolbar({
         } else if (p.type === "int") {
           parsedBindings[p.name] = toInt(raw);
         } else {
-          try { parsedBindings[p.name] = JSON.parse(raw); } catch { parsedBindings[p.name] = raw; }
+          try {
+            parsedBindings[p.name] = JSON.parse(raw);
+          } catch {
+            parsedBindings[p.name] = raw;
+          }
         }
       }
-      return { ...base, loss_kwargs: {}, loss_source: lossSource, loss_bindings: parsedBindings };
+      return {
+        ...base,
+        loss_kwargs: {},
+        loss_source: lossSource,
+        loss_bindings: parsedBindings,
+      };
     }
 
     const parsedLossKwargs: Record<string, unknown> = {};
@@ -364,7 +394,8 @@ export function Toolbar({
         let value: unknown;
         if (p.type === "float") value = optionalNumber(raw);
         else if (p.type === "int") value = optionalInt(raw);
-        else if (p.type === "int[]") value = raw.split(",").map((s) => toInt(s.trim()));
+        else if (p.type === "int[]")
+          value = raw.split(",").map((s) => toInt(s.trim()));
         else value = parseJson(raw);
         if (value !== undefined) parsedLossKwargs[p.name] = value;
       }
@@ -380,7 +411,8 @@ export function Toolbar({
   const running = status === "running";
   const params = selectedLossInfo?.params ?? [];
   const canRun = lossMode === "builtin" || dslErrors.length === 0;
-  const hasLossArgs = (lossMode === "builtin" ? params.length : dslParams.length) > 0;
+  const hasLossArgs =
+    (lossMode === "builtin" ? params.length : dslParams.length) > 0;
 
   // find the name of the indices param that accompanies a trajectories param
   function indicesParamFor(trajParamName: string): string | undefined {
@@ -407,7 +439,9 @@ export function Toolbar({
             onChange={(e) => handleExampleChange(e.target.value)}
           >
             {selectedExample === "Custom" && (
-              <option value="Custom" disabled>Custom</option>
+              <option value="Custom" disabled>
+                Custom
+              </option>
             )}
             {EXAMPLES.map((ex) => (
               <option key={ex.label}>{ex.label}</option>
@@ -416,7 +450,9 @@ export function Toolbar({
 
           <div style={{ width: 1, height: 16, background: "var(--border)" }} />
 
-          <span style={LABEL} title={TIP.optimizer}>optimizer</span>
+          <span style={LABEL} title={TIP.optimizer}>
+            optimizer
+          </span>
           <select
             style={SELECT}
             value={optimizer}
@@ -440,16 +476,24 @@ export function Toolbar({
               color: lossMode === "custom" ? "#6699cc" : undefined,
               cursor: running ? "not-allowed" : "pointer",
             }}
-            onClick={() => onLossModeChange(lossMode === "custom" ? "builtin" : "custom")}
+            onClick={() =>
+              onLossModeChange(lossMode === "custom" ? "builtin" : "custom")
+            }
             disabled={running}
-            title={lossMode === "custom" ? "Switch to built-in loss" : "Write a custom loss function"}
+            title={
+              lossMode === "custom"
+                ? "Switch to built-in loss"
+                : "Write a custom loss function"
+            }
           >
             custom
           </button>
 
           {lossMode === "builtin" && (
             <>
-              <span style={LABEL} title={TIP.loss}>loss</span>
+              <span style={LABEL} title={TIP.loss}>
+                loss
+              </span>
               <select
                 style={SELECT}
                 value={lossName}
@@ -460,7 +504,9 @@ export function Toolbar({
                 {lossFunctions.length === 0 ? (
                   <option>signal_error</option>
                 ) : (
-                  lossFunctions.map((l) => <option key={l.name}>{l.name}</option>)
+                  lossFunctions.map((l) => (
+                    <option key={l.name}>{l.name}</option>
+                  ))
                 )}
               </select>
             </>
@@ -468,7 +514,9 @@ export function Toolbar({
         </div>
 
         <div style={ROW}>
-          <span style={LABEL} title={TIP.lr}>lr</span>
+          <span style={LABEL} title={TIP.lr}>
+            lr
+          </span>
           <input
             type="text"
             inputMode="decimal"
@@ -480,8 +528,14 @@ export function Toolbar({
           />
 
           <span style={LABEL} title={TIP.steps}>
-            steps{optimizer === 'LBFGS' && (
-              <span title="LBFGS runs up to 20 inner iterations per step" style={{ color: '#fac863', marginLeft: 3 }}>⚠</span>
+            steps
+            {optimizer === "LBFGS" && (
+              <span
+                title="LBFGS runs up to 20 inner iterations per step"
+                style={{ color: "#fac863", marginLeft: 3 }}
+              >
+                ⚠
+              </span>
             )}
           </span>
           <input
@@ -493,10 +547,9 @@ export function Toolbar({
             disabled={running}
           />
 
-          <span
-            style={LABEL}
-            title={TIP.tol}
-          >tol</span>
+          <span style={LABEL} title={TIP.tol}>
+            tol
+          </span>
           <input
             type="text"
             style={{ ...INPUT, width: 56 }}
@@ -506,10 +559,9 @@ export function Toolbar({
             disabled={running}
           />
 
-          <span
-            style={LABEL}
-            title={TIP.patience}
-          >patience</span>
+          <span style={LABEL} title={TIP.patience}>
+            patience
+          </span>
           <input
             type="number"
             style={{ ...INPUT, width: 48 }}
@@ -519,10 +571,9 @@ export function Toolbar({
             disabled={running}
           />
 
-          <span
-            style={LABEL}
-            title={TIP.smoothEps}
-          >smooth_eps</span>
+          <span style={LABEL} title={TIP.smoothEps}>
+            smooth_eps
+          </span>
           <input
             type="text"
             inputMode="decimal"
@@ -533,7 +584,9 @@ export function Toolbar({
             disabled={running}
           />
 
-          <span style={LABEL} title={TIP.pruning}>pruning</span>
+          <span style={LABEL} title={TIP.pruning}>
+            pruning
+          </span>
           <select
             style={SELECT}
             value={pruning}
@@ -541,7 +594,10 @@ export function Toolbar({
             disabled={running}
             title={TIP.pruning}
           >
-            {(pruningStrategies.length > 0 ? pruningStrategies : DEFAULT_PRUNING_STRATEGIES).map((p) => (
+            {(pruningStrategies.length > 0
+              ? pruningStrategies
+              : DEFAULT_PRUNING_STRATEGIES
+            ).map((p) => (
               <option key={p}>{p}</option>
             ))}
           </select>
@@ -549,7 +605,13 @@ export function Toolbar({
           <button
             type="button"
             onClick={running ? onAbort : () => onRun(buildRequest())}
-            title={running ? "Stop" : canRun ? "Run" : "Fix loss errors before running"}
+            title={
+              running
+                ? "Stop"
+                : canRun
+                  ? "Run"
+                  : "Fix loss errors before running"
+            }
             disabled={!running && !canRun}
             style={{
               width: 34,
@@ -577,120 +639,167 @@ export function Toolbar({
         {hasLossArgs && (
           <div style={{ ...ROW, gap: 12 }}>
             <span style={GROUP_LABEL}>loss arguments</span>
-        {lossMode === "builtin" && params.map((p) => (
-          <div key={p.name} style={ROW}>
-            <span style={LABEL} title={LOSS_ARG_TIP[p.name]}>{p.name}</span>
-            {p.type === "float[][]" ? (
-              <CsvUpload
-                shape={trajShapes[p.name] ?? null}
-                disabled={running}
-                onLoad={(rows, cols) =>
-                  handleTrajLoad(p.name, indicesParamFor(p.name), rows, cols)
-                }
-              />
-            ) : p.type === "int[]" ? (
-              <input
-                style={{ ...INPUT, width: 140 }}
-                placeholder="0, 1, 2…"
-                value={lossKwargs[p.name] ?? ""}
-                onChange={(e) =>
-                  setLossKwargs((prev) => ({ ...prev, [p.name]: e.target.value }))
-                }
-                disabled={running}
-              />
-            ) : (
-              <input
-                type="number"
-                style={INPUT}
-                value={lossKwargs[p.name] ?? ""}
-                placeholder={p.default != null ? String(p.default) : undefined}
-                onChange={(e) =>
-                  setLossKwargs((prev) => ({ ...prev, [p.name]: e.target.value }))
-                }
-                disabled={running}
-              />
-            )}
-          </div>
-        ))}
+            {lossMode === "builtin" &&
+              params.map((p) => (
+                <div key={p.name} style={ROW}>
+                  <span style={LABEL} title={LOSS_ARG_TIP[p.name]}>
+                    {p.name}
+                  </span>
+                  {p.type === "float[][]" ? (
+                    <CsvUpload
+                      shape={trajShapes[p.name] ?? null}
+                      disabled={running}
+                      onLoad={(rows, cols) =>
+                        handleTrajLoad(
+                          p.name,
+                          indicesParamFor(p.name),
+                          rows,
+                          cols,
+                        )
+                      }
+                    />
+                  ) : p.type === "int[]" ? (
+                    <input
+                      style={{ ...INPUT, width: 140 }}
+                      placeholder="0, 1, 2…"
+                      value={lossKwargs[p.name] ?? ""}
+                      onChange={(e) =>
+                        setLossKwargs((prev) => ({
+                          ...prev,
+                          [p.name]: e.target.value,
+                        }))
+                      }
+                      disabled={running}
+                    />
+                  ) : (
+                    <input
+                      type="number"
+                      style={INPUT}
+                      value={lossKwargs[p.name] ?? ""}
+                      placeholder={
+                        p.default != null ? String(p.default) : undefined
+                      }
+                      onChange={(e) =>
+                        setLossKwargs((prev) => ({
+                          ...prev,
+                          [p.name]: e.target.value,
+                        }))
+                      }
+                      disabled={running}
+                    />
+                  )}
+                </div>
+              ))}
 
-        {lossMode === "custom" && dslParams.map((p) => (
-          <div key={p.name} style={ROW}>
-            <span style={LABEL} title={p.type ? DSL_TYPE_TIP[p.type] : undefined}>{p.name}</span>
-            {p.type === "traj_set" ? (
-              <CsvUpload
-                shape={dslTrajShapes[p.name] ?? null}
-                disabled={running}
-                onLoad={(rows, cols) => {
-                  setDslBindings((prev) => ({ ...prev, [p.name]: JSON.stringify(rows) }));
-                  setDslTrajShapes((prev) => ({ ...prev, [p.name]: [rows.length, cols] }));
-                }}
-              />
-            ) : p.type === "index_list" ? (
-              <input
-                style={{ ...INPUT, width: 140 }}
-                placeholder="0, 1, 2…"
-                value={dslBindings[p.name] ?? ""}
-                onChange={(e) =>
-                  setDslBindings((prev) => ({ ...prev, [p.name]: e.target.value }))
-                }
-                disabled={running}
-              />
-            ) : p.type === "scalar" ? (
-              <input
-                type="text"
-                inputMode="decimal"
-                style={INPUT}
-                value={dslBindings[p.name] ?? ""}
-                onChange={(e) =>
-                  setDslBindings((prev) => ({ ...prev, [p.name]: e.target.value }))
-                }
-                disabled={running}
-              />
-            ) : p.type === "int" ? (
-              <input
-                type="number"
-                style={INPUT}
-                step={1}
-                value={dslBindings[p.name] ?? ""}
-                onChange={(e) =>
-                  setDslBindings((prev) => ({ ...prev, [p.name]: e.target.value }))
-                }
-                disabled={running}
-              />
-            ) : (
-              <input
-                style={{ ...INPUT, width: 120 }}
-                placeholder="JSON"
-                value={dslBindings[p.name] ?? ""}
-                onChange={(e) =>
-                  setDslBindings((prev) => ({ ...prev, [p.name]: e.target.value }))
-                }
-                disabled={running}
-              />
-            )}
-          </div>
-        ))}
-
+            {lossMode === "custom" &&
+              dslParams.map((p) => (
+                <div key={p.name} style={ROW}>
+                  <span
+                    style={LABEL}
+                    title={p.type ? DSL_TYPE_TIP[p.type] : undefined}
+                  >
+                    {p.name}
+                  </span>
+                  {p.type === "traj_set" ? (
+                    <CsvUpload
+                      shape={dslTrajShapes[p.name] ?? null}
+                      disabled={running}
+                      onLoad={(rows, cols) => {
+                        setDslBindings((prev) => ({
+                          ...prev,
+                          [p.name]: JSON.stringify(rows),
+                        }));
+                        setDslTrajShapes((prev) => ({
+                          ...prev,
+                          [p.name]: [rows.length, cols],
+                        }));
+                      }}
+                    />
+                  ) : p.type === "index_list" ? (
+                    <input
+                      style={{ ...INPUT, width: 140 }}
+                      placeholder="0, 1, 2…"
+                      value={dslBindings[p.name] ?? ""}
+                      onChange={(e) =>
+                        setDslBindings((prev) => ({
+                          ...prev,
+                          [p.name]: e.target.value,
+                        }))
+                      }
+                      disabled={running}
+                    />
+                  ) : p.type === "scalar" ? (
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      style={INPUT}
+                      value={dslBindings[p.name] ?? ""}
+                      onChange={(e) =>
+                        setDslBindings((prev) => ({
+                          ...prev,
+                          [p.name]: e.target.value,
+                        }))
+                      }
+                      disabled={running}
+                    />
+                  ) : p.type === "int" ? (
+                    <input
+                      type="number"
+                      style={INPUT}
+                      step={1}
+                      value={dslBindings[p.name] ?? ""}
+                      onChange={(e) =>
+                        setDslBindings((prev) => ({
+                          ...prev,
+                          [p.name]: e.target.value,
+                        }))
+                      }
+                      disabled={running}
+                    />
+                  ) : (
+                    <input
+                      style={{ ...INPUT, width: 120 }}
+                      placeholder="JSON"
+                      value={dslBindings[p.name] ?? ""}
+                      onChange={(e) =>
+                        setDslBindings((prev) => ({
+                          ...prev,
+                          [p.name]: e.target.value,
+                        }))
+                      }
+                      disabled={running}
+                    />
+                  )}
+                </div>
+              ))}
           </div>
         )}
 
         {Object.keys(paramValues).length > 0 && (
           <div style={{ ...ROW, gap: 12 }}>
             <span style={GROUP_LABEL}>initial parameters</span>
-        {Object.keys(paramValues).map((name) => (
-          <div key={name} style={ROW}>
-            <span style={{ ...LABEL, color: "#f99157" }} title={TIP.initialParam}>_{name}</span>
-            <input
-              type="number"
-              style={INPUT}
-              value={paramValues[name]}
-              onChange={(e) =>
-                setParamValues((prev) => ({ ...prev, [name]: e.target.value }))
-              }
-              disabled={running}
-            />
-          </div>
-        ))}
+            {Object.keys(paramValues).map((name) => (
+              <div key={name} style={ROW}>
+                <span
+                  style={{ ...LABEL, color: "#f99157" }}
+                  title={TIP.initialParam}
+                >
+                  _{name}
+                </span>
+                <input
+                  type="number"
+                  style={INPUT}
+                  value={paramValues[name]}
+                  onChange={(e) =>
+                    setParamValues((prev) => ({
+                      ...prev,
+                      [name]: e.target.value,
+                    }))
+                  }
+                  disabled={running}
+                />
+              </div>
+            ))}
           </div>
         )}
       </div>

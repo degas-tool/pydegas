@@ -26,8 +26,7 @@ def cleanup_expired_sessions() -> int:
     with Session(get_engine()) as db:
         result = db.exec(
             delete(OptimizationSession).where(
-                col(OptimizationSession.expires_at)
-                < datetime.now(UTC).replace(tzinfo=None)
+                col(OptimizationSession.expires_at) < datetime.now(UTC).replace(tzinfo=None)
             )
         )
         db.commit()
@@ -80,9 +79,7 @@ def create_lifespan(host: str, port: int, docs_url: str = "/docs") -> AppLifespa
                 )
                 await limiter.reset_slots()
             except RedisError:
-                logger.exception(
-                    "could not connect to the redis of optimization rate limiter."
-                )
+                logger.exception("could not connect to the redis of optimization rate limiter.")
                 await redis_client.aclose()
                 raise
 

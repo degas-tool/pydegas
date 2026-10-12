@@ -17,7 +17,12 @@ export class PanelErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("[PanelErrorBoundary]", this.props.label ?? "panel", error, info.componentStack);
+    console.error(
+      "[PanelErrorBoundary]",
+      this.props.label ?? "panel",
+      error,
+      info.componentStack,
+    );
   }
 
   render() {

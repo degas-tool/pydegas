@@ -33,9 +33,7 @@ def create_app(
     if docs_url is None:
         docs_url = app_settings.docs_url
     if lifespan is None:
-        lifespan = create_lifespan(
-            host=app_settings.host, port=app_settings.port, docs_url=docs_url
-        )
+        lifespan = create_lifespan(host=app_settings.host, port=app_settings.port, docs_url=docs_url)
 
     configure_logging(level=app_settings.logging.level)
 
@@ -49,15 +47,9 @@ def create_app(
     )
 
     @app.exception_handler(Exception)
-    async def unhandled_exception_handler(
-        request: Request, exc: Exception
-    ) -> JSONResponse:
-        request_id = getattr(request.state, "request_id", None) or request.headers.get(
-            "DeGAS-Request-Id"
-        )
-        logger.opt(exception=True).error(
-            "Unhandled exception (request_id={})", request_id
-        )
+    async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        request_id = getattr(request.state, "request_id", None) or request.headers.get("DeGAS-Request-Id")
+        logger.opt(exception=True).error("Unhandled exception (request_id={})", request_id)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"error": "Internal server error", "request_id": request_id},
@@ -83,9 +75,7 @@ def create_app(
     async def health() -> dict[str, object]:
         limiter = getattr(app.state, "orl_limiter", None)
         max_concurrent = app_settings.optimization_limits.max_concurrent_runs
-        slots_free = (
-            await limiter.slots_free() if limiter is not None else max_concurrent
-        )
+        slots_free = await limiter.slots_free() if limiter is not None else max_concurrent
         return {
             "unix": time.time(),
             "slots_free": slots_free,

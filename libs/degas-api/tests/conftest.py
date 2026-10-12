@@ -26,9 +26,7 @@ def test_settings(monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
     monkeypatch.setattr(app_settings, "allowed_hosts", ["*"])
     monkeypatch.setattr(app_settings, "static_dir", None)
     monkeypatch.setattr(app_settings, "logging", LoggingSettings(level="WARNING"))
-    monkeypatch.setattr(
-        app_settings, "optimization_rate_limiter", RedisRateLimiterSettings(enabled=False)
-    )
+    monkeypatch.setattr(app_settings, "optimization_rate_limiter", RedisRateLimiterSettings(enabled=False))
     monkeypatch.setattr(app_settings, "optimization_limits", OptimizationLimitsSettings())
 
 

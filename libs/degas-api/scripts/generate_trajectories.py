@@ -9,9 +9,7 @@ from pathlib import Path
 import numpy as np
 
 
-def thermostat(
-    rng: np.random.Generator, t_on: float = 17.0, t_off: float = 20.0
-) -> np.ndarray:
+def thermostat(rng: np.random.Generator, t_on: float = 17.0, t_off: float = 20.0) -> np.ndarray:
     T = np.zeros(31)
     curr_t = 16.0
     is_on = -1
@@ -62,9 +60,7 @@ def gearbox(rng: np.random.Generator, s1: float = 10.0, s2: float = 20.0) -> np.
     return v
 
 
-def bouncing_ball(
-    rng: np.random.Generator, r: float = 5.0, c: float = 0.0025
-) -> np.ndarray:
+def bouncing_ball(rng: np.random.Generator, r: float = 5.0, c: float = 0.0025) -> np.ndarray:
     H = np.zeros(36)
     curr_h = rng.normal(9.0, 1.0)
     mode = -1.0
@@ -110,16 +106,12 @@ def main() -> int:
     p.add_argument("name", choices=[*SIMULATORS, "all"], default="all", nargs="?")
     p.add_argument("--n", type=int, default=100, help="number of trajectories")
     p.add_argument("--seed", type=int, default=0)
-    p.add_argument(
-        "--out", type=Path, default=Path(__file__).resolve().parent.parent / "data"
-    )
+    p.add_argument("--out", type=Path, default=Path(__file__).resolve().parent.parent / "data")
     args = p.parse_args()
 
     args.out.mkdir(parents=True, exist_ok=True)
     targets = list(SIMULATORS) if args.name == "all" else [args.name]
-    print(
-        f"generating {args.n} trajectories per program (seed={args.seed}) into {args.out}"
-    )
+    print(f"generating {args.n} trajectories per program (seed={args.seed}) into {args.out}")
     for name in targets:
         generate(name, args.n, args.seed, args.out)
     return 0

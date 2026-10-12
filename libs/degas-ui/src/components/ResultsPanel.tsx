@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 import type { RunOutcome, RunStatus, StepOut } from "../types";
-import { PlotlyChart, type PlotlyLayout, type PlotlyTrace } from "./PlotlyChart";
+import {
+  PlotlyChart,
+  type PlotlyLayout,
+  type PlotlyTrace,
+} from "./PlotlyChart";
 
 // Badge label + color per terminal outcome.
 const OUTCOME_BADGE: Record<RunOutcome, { label: string; color: string }> = {
@@ -180,7 +184,14 @@ export function ResultsPanel({
           />
         ))}
 
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+        <div
+          style={{
+            marginLeft: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
           {status === "running" && (
             <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
               step {steps.length > 0 ? steps[steps.length - 1].step + 1 : "…"}
@@ -260,24 +271,26 @@ export function ResultsPanel({
         </div>
       </div>
 
-      {status === "done" && finalParams && Object.keys(finalParams).length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            gap: 16,
-            padding: "6px 14px",
-            borderTop: "1px solid var(--border)",
-            flexWrap: "wrap",
-          }}
-        >
-          {Object.entries(finalParams).map(([name, val]) => (
-            <span key={name} style={{ fontSize: 11, fontFamily: "inherit" }}>
-              <span style={{ color: "var(--text-muted)" }}>_{name} = </span>
-              <span style={{ color: "#f99157" }}>{val.toFixed(4)}</span>
-            </span>
-          ))}
-        </div>
-      )}
+      {status === "done" &&
+        finalParams &&
+        Object.keys(finalParams).length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              padding: "6px 14px",
+              borderTop: "1px solid var(--border)",
+              flexWrap: "wrap",
+            }}
+          >
+            {Object.entries(finalParams).map(([name, val]) => (
+              <span key={name} style={{ fontSize: 11, fontFamily: "inherit" }}>
+                <span style={{ color: "var(--text-muted)" }}>_{name} = </span>
+                <span style={{ color: "#f99157" }}>{val.toFixed(4)}</span>
+              </span>
+            ))}
+          </div>
+        )}
 
       {slowStep && status === "running" && (
         <div
@@ -291,7 +304,8 @@ export function ResultsPanel({
             flexShrink: 0,
           }}
         >
-          This step is taking longer than usual; consider checking your loss arguments and learning rate, or stop the optimization manually.
+          This step is taking longer than usual; consider checking your loss
+          arguments and learning rate, or stop the optimization manually.
         </div>
       )}
 

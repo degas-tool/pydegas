@@ -39,7 +39,10 @@ export function buildExportBundle(args: {
 }): ExportBundle {
   const { steps, request, outcome, error, wallClockMs } = args;
 
-  const engineComputeMs = steps.reduce((sum, s) => sum + (s.elapsed_ms ?? 0), 0);
+  const engineComputeMs = steps.reduce(
+    (sum, s) => sum + (s.elapsed_ms ?? 0),
+    0,
+  );
   const finalParams = steps.at(-1)?.params ?? request.initial_params;
 
   const loss: ExportBundle["config"]["loss"] = request.loss_source

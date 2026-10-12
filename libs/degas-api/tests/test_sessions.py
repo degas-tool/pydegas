@@ -124,14 +124,10 @@ def test_patch_results_without_token(client: TestClient) -> None:
     [{}, {"X-Owner-Token": "wrong"}, {"X-Owner-Token": "t\u00f6ken".encode("latin-1")}],
     ids=["missing", "wrong", "non-ascii"],
 )
-def test_rename_needs_the_owner_token(
-    client: TestClient, headers: dict[str, Any]
-) -> None:
+def test_rename_needs_the_owner_token(client: TestClient, headers: dict[str, Any]) -> None:
     session = create(client)
 
-    response = client.patch(
-        f"/api/sessions/{session['id']}", json={"name": "mine"}, headers=headers
-    )
+    response = client.patch(f"/api/sessions/{session['id']}", json={"name": "mine"}, headers=headers)
 
     assert response.status_code == 403
     assert client.get(f"/api/sessions/{session['id']}").json()["name"] is None
@@ -184,9 +180,7 @@ def test_cleanup_removes_only_expired_sessions(client: TestClient) -> None:
         assert db.get(OptimizationSession, kept["id"]) is not None
 
 
-def test_init_db_tolerates_a_table_created_by_another_worker(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_init_db_tolerates_a_table_created_by_another_worker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     path = str(tmp_path / "race.db")
     init_db(path)
     monkeypatch.setattr(SQLiteDialect, "has_table", lambda *args, **kwargs: False)

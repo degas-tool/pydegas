@@ -181,7 +181,7 @@ ang[50] = currAng;`,
     label: "BouncingBall",
     program: `/* Bouncing ball — Chaudhuri & Solar-Lezama (2010).
  * Recover the spring/damping parameters _R and _C from an observed
- * height trajectory. 
+ * height trajectory.
  */
 
 array[36] H;

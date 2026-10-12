@@ -33,16 +33,27 @@ import type {
   RunOutcome,
 } from "./types";
 
-const RUN_OUTCOMES: readonly string[] = ["converged", "not_converged", "stopped", "run_timeout"] satisfies RunOutcome[];
+const RUN_OUTCOMES: readonly string[] = [
+  "converged",
+  "not_converged",
+  "stopped",
+  "run_timeout",
+] satisfies RunOutcome[];
 
 function toRunOutcome(value: string | null): RunOutcome | null {
-  return value !== null && RUN_OUTCOMES.includes(value) ? (value as RunOutcome) : null;
+  return value !== null && RUN_OUTCOMES.includes(value)
+    ? (value as RunOutcome)
+    : null;
 }
 
 function parseRequest(json: string): OptimizationRequest | null {
   try {
     const value: unknown = JSON.parse(json);
-    if (typeof value === "object" && value !== null && typeof (value as { program?: unknown }).program === "string") {
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      typeof (value as { program?: unknown }).program === "string"
+    ) {
       return value as OptimizationRequest;
     }
   } catch {
@@ -108,7 +119,6 @@ const NAV_BTN: React.CSSProperties = {
   transition: "background 0.15s",
 };
 
-
 // Takes the mousedown event and the ref directly (not a ref-capturing factory
 // called during render) so callers pass the ref from inside the event handler,
 // where reading ref.current is allowed (react-hooks/refs).
@@ -162,13 +172,28 @@ function Resizer({
       style={{
         flexShrink: 0,
         ...(isCol
-          ? { width: 10, cursor: "col-resize", display: "flex", justifyContent: "center", alignItems: "stretch" }
-          : { height: 8, cursor: "row-resize", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "stretch" }),
+          ? {
+              width: 10,
+              cursor: "col-resize",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "stretch",
+            }
+          : {
+              height: 8,
+              cursor: "row-resize",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "stretch",
+            }),
       }}
     >
       <div
         style={{
-          ...(isCol ? { width: 2, height: "100%" } : { height: 2, width: "100%" }),
+          ...(isCol
+            ? { width: 2, height: "100%" }
+            : { height: 2, width: "100%" }),
           background: hover ? "#6699cc99" : "var(--border)",
           borderRadius: 1,
           transition: "background 0.15s",
@@ -178,8 +203,15 @@ function Resizer({
   );
 }
 
-
-function NavLink({ href, title, children }: { href: string; title: string; children: React.ReactNode }) {
+function NavLink({
+  href,
+  title,
+  children,
+}: {
+  href: string;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <a
       href={href}
@@ -202,7 +234,9 @@ function NavLink({ href, title, children }: { href: string; title: string; child
         fontWeight: 600,
         transition: "background 0.15s",
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "var(--btn-hover)")}
+      onMouseEnter={(e) =>
+        (e.currentTarget.style.background = "var(--btn-hover)")
+      }
       onMouseLeave={(e) => (e.currentTarget.style.background = "var(--btn-bg)")}
     >
       {children}
@@ -214,10 +248,22 @@ function NavLink({ href, title, children }: { href: string; title: string; child
 
 export default function App() {
   const { theme, toggle } = useTheme();
-  const { steps, status, error, errorKind, outcome, slowStep, lastRequest, wallClockMs, run, abort, restoreRun } = useOptimization();
+  const {
+    steps,
+    status,
+    error,
+    errorKind,
+    outcome,
+    slowStep,
+    lastRequest,
+    wallClockMs,
+    run,
+    abort,
+    restoreRun,
+  } = useOptimization();
   const displayError = error == null ? null : formatRunError(errorKind, error);
   // connection_lost is shown only in the toast; suppress the in-panel banner to avoid duplication
-  const panelError = errorKind === 'connection_lost' ? null : displayError;
+  const panelError = errorKind === "connection_lost" ? null : displayError;
 
   const [program, setProgram] = useState(EXAMPLES[0].program);
   const [lossFunctions, setLossFunctions] = useState<LossFunctionInfo[]>([]);
@@ -241,9 +287,12 @@ export default function App() {
     toastTimerRef.current = setTimeout(() => setSessionToast(null), ms);
   }, []);
 
-  useEffect(() => () => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    },
+    [],
+  );
 
   const [lossMode, setLossMode] = useState<LossMode>("builtin");
   const [lossName, setLossName] = useState(EXAMPLES[0].loss_function);
@@ -254,7 +303,8 @@ export default function App() {
   // Built-in loss definitions, keyed by name, from the backend response.
   const lossDefs = useMemo<Record<string, string>>(() => {
     const m: Record<string, string> = {};
-    for (const lf of lossFunctions) if (lf.definition) m[lf.name] = lf.definition;
+    for (const lf of lossFunctions)
+      if (lf.definition) m[lf.name] = lf.definition;
     return m;
   }, [lossFunctions]);
 
@@ -269,7 +319,10 @@ export default function App() {
   function handleLossModeChange(mode: LossMode) {
     if (mode === "custom") {
       const def = lossDefs[lossName];
-      if (def && (lossSource.trim() === "" || pristineSources.has(lossSource))) {
+      if (
+        def &&
+        (lossSource.trim() === "" || pristineSources.has(lossSource))
+      ) {
         setLossSource(def);
       }
     }
@@ -277,9 +330,9 @@ export default function App() {
   }
 
   // panel size fractions (0–1)
-  const [leftFrac, setLeftFrac] = useState(0.5);       // left col width
-  const [rightYFrac, setRightYFrac] = useState(0.6);   // results / distribution split
-  const [editorFrac, setEditorFrac] = useState(0.6);   // soga / dsl split
+  const [leftFrac, setLeftFrac] = useState(0.5); // left col width
+  const [rightYFrac, setRightYFrac] = useState(0.6); // results / distribution split
+  const [editorFrac, setEditorFrac] = useState(0.6); // soga / dsl split
 
   const mainRef = useRef<HTMLDivElement>(null);
   const rightColRef = useRef<HTMLDivElement>(null);
@@ -291,11 +344,15 @@ export default function App() {
     fetchPruningStrategies().then(setPruningStrategies).catch(console.error);
 
     function pollHealth() {
-      fetchHealth().then(setHealth).catch(() => setHealth(null));
+      fetchHealth()
+        .then(setHealth)
+        .catch(() => setHealth(null));
       healthTimerRef.current = setTimeout(pollHealth, 15_000);
     }
     pollHealth();
-    return () => { if (healthTimerRef.current) clearTimeout(healthTimerRef.current); };
+    return () => {
+      if (healthTimerRef.current) clearTimeout(healthTimerRef.current);
+    };
   }, []);
 
   // Restore session from URL on mount
@@ -308,7 +365,8 @@ export default function App() {
         if (req) setProgram(req.program);
         setLossMode(s.loss_mode);
         setLossName(s.loss_name);
-        if (s.loss_mode === "custom" && req?.loss_source) setLossSource(req.loss_source);
+        if (s.loss_mode === "custom" && req?.loss_source)
+          setLossSource(req.loss_source);
         if (s.steps.length > 0) {
           restoreRun({
             steps: s.steps,
@@ -337,22 +395,25 @@ export default function App() {
     }).catch(console.error);
   }, [status, steps, outcome]);
 
-  const handleRun = useCallback(async (req: OptimizationRequest) => {
-    if (startingRef.current) return;
-    startingRef.current = true;
-    setDismissedError(null);
-    const session = await createSession({
-      loss_mode: lossMode,
-      loss_name: lossName,
-      request: JSON.stringify(req),
-    }).catch(() => null);
-    startingRef.current = false;
-    runSessionIdRef.current = session?.id ?? null;
-    setCurrentSessionId(session?.id ?? null);
-    setSessionParam(session?.id ?? null);
-    if (session?.owner_token) setOwnerToken(session.id, session.owner_token);
-    run(req);
-  }, [lossMode, lossName, run]);
+  const handleRun = useCallback(
+    async (req: OptimizationRequest) => {
+      if (startingRef.current) return;
+      startingRef.current = true;
+      setDismissedError(null);
+      const session = await createSession({
+        loss_mode: lossMode,
+        loss_name: lossName,
+        request: JSON.stringify(req),
+      }).catch(() => null);
+      startingRef.current = false;
+      runSessionIdRef.current = session?.id ?? null;
+      setCurrentSessionId(session?.id ?? null);
+      setSessionParam(session?.id ?? null);
+      if (session?.owner_token) setOwnerToken(session.id, session.owner_token);
+      run(req);
+    },
+    [lossMode, lossName, run],
+  );
 
   function handleNewOptimization() {
     setSessionParam(null);
@@ -376,9 +437,18 @@ export default function App() {
 
   function handleDownload() {
     if (downloadBlocker !== null || lastRequest === null) return;
-    const exportOutcome = status === "error" ? (errorKind ?? "error") : (outcome ?? "not_converged");
+    const exportOutcome =
+      status === "error"
+        ? (errorKind ?? "error")
+        : (outcome ?? "not_converged");
     downloadBundle(
-      buildExportBundle({ steps, request: lastRequest, outcome: exportOutcome, error, wallClockMs }),
+      buildExportBundle({
+        steps,
+        request: lastRequest,
+        outcome: exportOutcome,
+        error,
+        wallClockMs,
+      }),
     );
   }
 
@@ -417,26 +487,49 @@ export default function App() {
       />
 
       {sessionToast && (
-        <div style={{
-          position: "fixed", bottom: 56, left: "50%", transform: "translateX(-50%)",
-          background: "var(--bg-surface)", border: "1px solid var(--border)",
-          borderRadius: 8, padding: "6px 14px", fontSize: 12,
-          color: "var(--text-muted)", zIndex: 300, pointerEvents: "none",
-        }}>
+        <div
+          style={{
+            position: "fixed",
+            bottom: 56,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "var(--bg-surface)",
+            border: "1px solid var(--border)",
+            borderRadius: 8,
+            padding: "6px 14px",
+            fontSize: 12,
+            color: "var(--text-muted)",
+            zIndex: 300,
+            pointerEvents: "none",
+          }}
+        >
           {sessionToast}
         </div>
       )}
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <ThemeToggle theme={theme} onToggle={toggle} />
           <button
             type="button"
             onClick={() => setHistoryOpen(true)}
             title="View runs"
-            style={{ ...NAV_BTN, ...(currentSessionId ? { borderColor: "#6699cc44" } : {}) }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--btn-hover)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--btn-bg)")}
+            style={{
+              ...NAV_BTN,
+              ...(currentSessionId ? { borderColor: "#6699cc44" } : {}),
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "var(--btn-hover)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "var(--btn-bg)")
+            }
           >
             ☰ previous runs
           </button>
@@ -445,8 +538,12 @@ export default function App() {
             onClick={handleNewOptimization}
             title="New optimization"
             style={NAV_BTN}
-            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--btn-hover)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--btn-bg)")}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.background = "var(--btn-hover)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "var(--btn-bg)")
+            }
           >
             + new
           </button>
@@ -455,9 +552,15 @@ export default function App() {
           {health !== null && (
             <span
               title={`${health.slots_free} of ${health.max_concurrent} optimization slots free`}
-              style={{ fontSize: 11, color: health.slots_free === 0 ? "#ec5f67" : "var(--text-muted)" }}
+              style={{
+                fontSize: 11,
+                color:
+                  health.slots_free === 0 ? "#ec5f67" : "var(--text-muted)",
+              }}
             >
-              {health.slots_free === 0 ? "server busy" : `${health.slots_free}/${health.max_concurrent} slots free`}
+              {health.slots_free === 0
+                ? "server busy"
+                : `${health.slots_free}/${health.max_concurrent} slots free`}
             </span>
           )}
           <a
@@ -465,14 +568,28 @@ export default function App() {
             target="_blank"
             rel="noopener noreferrer"
             title="Author on GitHub"
-            style={{ fontSize: 11, color: "var(--text-muted)", textDecoration: "none" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
+            style={{
+              fontSize: 11,
+              color: "var(--text-muted)",
+              textDecoration: "none",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.color = "var(--text-primary)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color = "var(--text-muted)")
+            }
           >
             ouz-m
           </a>
           <NavLink href={REPO_URL} title="pydegas on GitHub">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              aria-hidden="true"
+            >
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
             </svg>
           </NavLink>
@@ -481,41 +598,81 @@ export default function App() {
 
       {/* main: left | resizer | right */}
       <div ref={mainRef} style={{ flex: 1, minHeight: 0, display: "flex" }}>
-
         {/* left panel */}
-        <div style={{ flex: leftFrac, minWidth: 200, ...PANEL, background: "var(--bg-surface)" }}>
+        <div
+          style={{
+            flex: leftFrac,
+            minWidth: 200,
+            ...PANEL,
+            background: "var(--bg-surface)",
+          }}
+        >
           {/* editor area: soga [resizer] loss-editor (always shown) */}
-          <div ref={leftEditorRef} style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-            <div style={{ flex: editorFrac, minHeight: 60, position: "relative" }}>
+          <div
+            ref={leftEditorRef}
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div
+              style={{ flex: editorFrac, minHeight: 60, position: "relative" }}
+            >
               <SogaEditor
                 theme={theme}
                 value={program}
-                onChange={(v) => { if (v !== undefined) setProgram(v); }}
+                onChange={(v) => {
+                  if (v !== undefined) setProgram(v);
+                }}
               />
-              <div style={{ position: "absolute", top: 8, right: 18, zIndex: 10 }}>
-                <NavLink href={SOGA_SYNTAX_URL} title="Program syntax documentation">?</NavLink>
+              <div
+                style={{ position: "absolute", top: 8, right: 18, zIndex: 10 }}
+              >
+                <NavLink
+                  href={SOGA_SYNTAX_URL}
+                  title="Program syntax documentation"
+                >
+                  ?
+                </NavLink>
               </div>
             </div>
 
-            <Resizer direction="y" onMouseDown={(e) => startDrag(e, leftEditorRef, "y", setEditorFrac, 0.15, 0.85)} />
-            <div style={{ flex: 1 - editorFrac, minHeight: 40, display: "flex", flexDirection: "column" }}>
-              <div style={{
-                borderBottom: "1px solid var(--border)",
-                padding: "5px 14px",
-                fontSize: 11,
-                color: "var(--text-muted)",
-                background: "var(--bg-page)",
+            <Resizer
+              direction="y"
+              onMouseDown={(e) =>
+                startDrag(e, leftEditorRef, "y", setEditorFrac, 0.15, 0.85)
+              }
+            />
+            <div
+              style={{
+                flex: 1 - editorFrac,
+                minHeight: 40,
                 display: "flex",
-                alignItems: "center",
-                gap: 8,
-                flexShrink: 0,
-              }}>
+                flexDirection: "column",
+              }}
+            >
+              <div
+                style={{
+                  borderBottom: "1px solid var(--border)",
+                  padding: "5px 14px",
+                  fontSize: 11,
+                  color: "var(--text-muted)",
+                  background: "var(--bg-page)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexShrink: 0,
+                }}
+              >
                 {isCustom ? (
                   <>
                     <span>loss function</span>
                     {dslErrors.length > 0 && (
                       <span style={{ color: "#ec5f67" }}>
-                        {dslErrors.length} error{dslErrors.length > 1 ? "s" : ""}
+                        {dslErrors.length} error
+                        {dslErrors.length > 1 ? "s" : ""}
                       </span>
                     )}
                     {selectedDef && (
@@ -541,19 +698,36 @@ export default function App() {
                   </>
                 ) : (
                   <span>
-                    loss preview · <span style={{ color: "#fac863" }}>{lossName}</span>
+                    loss preview ·{" "}
+                    <span style={{ color: "#fac863" }}>{lossName}</span>
                     {selectedDef ? " · read-only" : " · no definition yet"}
                   </span>
                 )}
               </div>
               <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
-                <div style={{ position: "absolute", top: 8, right: 18, zIndex: 10 }}>
-                  <NavLink href={LOSS_DSL_URL} title="Loss DSL documentation">?</NavLink>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    right: 18,
+                    zIndex: 10,
+                  }}
+                >
+                  <NavLink href={LOSS_DSL_URL} title="Loss DSL documentation">
+                    ?
+                  </NavLink>
                 </div>
                 <LossDSLEditor
-                  key={isCustom ? "loss-editor-custom" : `loss-preview-${lossName}`}
+                  key={
+                    isCustom ? "loss-editor-custom" : `loss-preview-${lossName}`
+                  }
                   theme={theme}
-                  value={isCustom ? lossSource : (selectedDef ?? `// No DSL definition available for "${lossName}" yet.\n// Switch to 'custom' to write your own loss.`)}
+                  value={
+                    isCustom
+                      ? lossSource
+                      : (selectedDef ??
+                        `// No DSL definition available for "${lossName}" yet.\n// Switch to 'custom' to write your own loss.`)
+                  }
                   onChange={setLossSource}
                   onValidate={(params, errors) => {
                     setDslParams(params);
@@ -585,11 +759,29 @@ export default function App() {
         </div>
 
         {/* left / right resizer */}
-        <Resizer direction="x" onMouseDown={(e) => startDrag(e, mainRef, "x", setLeftFrac)} />
+        <Resizer
+          direction="x"
+          onMouseDown={(e) => startDrag(e, mainRef, "x", setLeftFrac)}
+        />
 
         {/* right column: results [resizer] distribution */}
-        <div ref={rightColRef} style={{ flex: 1 - leftFrac, minWidth: 200, display: "flex", flexDirection: "column" }}>
-          <div style={{ ...PANEL, flex: rightYFrac, background: "var(--bg-results)", minHeight: 60 }}>
+        <div
+          ref={rightColRef}
+          style={{
+            flex: 1 - leftFrac,
+            minWidth: 200,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div
+            style={{
+              ...PANEL,
+              flex: rightYFrac,
+              background: "var(--bg-results)",
+              minHeight: 60,
+            }}
+          >
             <PanelErrorBoundary label="Results">
               <ResultsPanel
                 steps={steps}
@@ -603,8 +795,18 @@ export default function App() {
               />
             </PanelErrorBoundary>
           </div>
-          <Resizer direction="y" onMouseDown={(e) => startDrag(e, rightColRef, "y", setRightYFrac)} />
-          <div style={{ ...PANEL, flex: 1 - rightYFrac, background: "var(--bg-results)", minHeight: 60 }}>
+          <Resizer
+            direction="y"
+            onMouseDown={(e) => startDrag(e, rightColRef, "y", setRightYFrac)}
+          />
+          <div
+            style={{
+              ...PANEL,
+              flex: 1 - rightYFrac,
+              background: "var(--bg-results)",
+              minHeight: 60,
+            }}
+          >
             <PanelErrorBoundary label="Distribution">
               <DistributionPanel steps={steps} theme={theme} />
             </PanelErrorBoundary>

@@ -1,4 +1,4 @@
-grammar SOGA; 
+grammar SOGA;
 
 progr : (data ';')*? (instr ';' | array ';')*;
 
@@ -46,6 +46,6 @@ NUM : '-'? DIGIT+ ('.' DIGIT*)?;
 COMM : '/*' .*? '*/' -> skip;
 WS : (' '|'\t'|'\r'|'\n') -> skip;
 
-fragment 
+fragment
 ALPHA : [a-zA-Z];
 DIGIT : [0-9];

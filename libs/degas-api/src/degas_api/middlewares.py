@@ -8,9 +8,7 @@ from fastapi import Request, Response
 from loguru import logger
 
 
-async def add_security_headers(
-    request: Request, call_next: Callable[[Request], Awaitable[Response]]
-) -> Response:
+async def add_security_headers(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
@@ -39,9 +37,7 @@ async def add_request_duration_header(
 
 
 def api_version_middleware(version: str) -> Callable:
-    async def add_api_version_header(
-        request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
+    async def add_api_version_header(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         response = await call_next(request)
         response.headers["DeGAS-Api-Version"] = version
         return response
@@ -49,9 +45,7 @@ def api_version_middleware(version: str) -> Callable:
     return add_api_version_header
 
 
-async def add_request_id_header(
-    request: Request, call_next: Callable[[Request], Awaitable[Response]]
-) -> Response:
+async def add_request_id_header(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
     request_id = set_request_id(request)
     response = await call_next(request)
     response.headers["DeGAS-Request-Id"] = request_id
@@ -59,9 +53,7 @@ async def add_request_id_header(
 
 
 def logging_context_middleware() -> Callable:
-    async def add_logging_context(
-        request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
+    async def add_logging_context(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         request_id = set_request_id(request)
         method = request.method
 

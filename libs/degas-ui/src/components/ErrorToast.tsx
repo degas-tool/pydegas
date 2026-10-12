@@ -5,7 +5,10 @@ interface Props {
   onDismiss: () => void;
 }
 
-export function ErrorToast({ message, onDismiss }: Props): React.ReactElement | null {
+export function ErrorToast({
+  message,
+  onDismiss,
+}: Props): React.ReactElement | null {
   if (message === null) {
     return null;
   }

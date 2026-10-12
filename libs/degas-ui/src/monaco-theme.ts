@@ -2,7 +2,10 @@ import type { BeforeMount } from "@monaco-editor/react";
 
 type Monaco = Parameters<BeforeMount>[0];
 
-export const EDITOR_THEME = { dark: "degas-dark", light: "degas-light" } as const;
+export const EDITOR_THEME = {
+  dark: "degas-dark",
+  light: "degas-light",
+} as const;
 
 export function defineEditorThemes(monaco: Monaco): void {
   monaco.editor.defineTheme(EDITOR_THEME.dark, {

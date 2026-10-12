@@ -28,7 +28,9 @@ function storeTheme(theme: Theme): void {
 }
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>(() => getStoredTheme() ?? getSystemTheme());
+  const [theme, setTheme] = useState<Theme>(
+    () => getStoredTheme() ?? getSystemTheme(),
+  );
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);

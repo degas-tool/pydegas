@@ -41,7 +41,9 @@ export async function fetchPruningStrategies(): Promise<string[]> {
   return res.json();
 }
 
-export async function validateLossSource(source: string): Promise<LossValidateResponse> {
+export async function validateLossSource(
+  source: string,
+): Promise<LossValidateResponse> {
   const res = await fetch(`${BASE}/optimization/loss/validate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -90,10 +92,17 @@ export async function getSession(id: string): Promise<SessionData> {
 
 export async function patchSession(
   id: string,
-  payload: { steps?: StepOut[]; status?: string; outcome?: string; name?: string },
+  payload: {
+    steps?: StepOut[];
+    status?: string;
+    outcome?: string;
+    name?: string;
+  },
   ownerToken?: string,
 ): Promise<void> {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   if (ownerToken) headers["X-Owner-Token"] = ownerToken;
   const res = await fetch(sessionUrl(id), {
     method: "PATCH",
@@ -103,7 +112,10 @@ export async function patchSession(
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
 }
 
-export async function deleteSession(id: string, ownerToken: string): Promise<void> {
+export async function deleteSession(
+  id: string,
+  ownerToken: string,
+): Promise<void> {
   const res = await fetch(sessionUrl(id), {
     method: "DELETE",
     headers: { "X-Owner-Token": ownerToken },
@@ -118,9 +130,14 @@ export async function getSessions(limit = 50): Promise<SessionSummary[]> {
 }
 
 /** Open a WebSocket, run the optimization, and stream frames to the handlers. */
-export function runOptimization(request: OptimizationRequest, handlers: RunHandlers): RunHandle {
+export function runOptimization(
+  request: OptimizationRequest,
+  handlers: RunHandlers,
+): RunHandle {
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-  const ws = new WebSocket(`${proto}//${window.location.host}${BASE}/optimization/ws`);
+  const ws = new WebSocket(
+    `${proto}//${window.location.host}${BASE}/optimization/ws`,
+  );
   let settled = false; // true once an end/error frame arrived — suppresses the close→connection_lost fallback
   let opened = false;
 
@@ -142,7 +159,10 @@ export function runOptimization(request: OptimizationRequest, handlers: RunHandl
       handlers.onEnd(m.outcome as RunOutcome);
     } else if (m.type === "error") {
       settled = true;
-      handlers.onError(String(m.detail ?? "Optimization failed."), (m.kind as RunErrorKind) ?? "compute_error");
+      handlers.onError(
+        String(m.detail ?? "Optimization failed."),
+        (m.kind as RunErrorKind) ?? "compute_error",
+      );
     }
     // "start" frames carry no UI state beyond what status already conveys.
   };

@@ -35,7 +35,9 @@ export function PlotlyChart({ data, layout, visible }: Props) {
     const el = ref.current;
     const plotly = window.Plotly;
     if (!visible || !el || !plotly) return;
-    plotly.react(el, data, { ...layout, autosize: true }, CONFIG).catch(console.error);
+    plotly
+      .react(el, data, { ...layout, autosize: true }, CONFIG)
+      .catch(console.error);
   }, [data, layout, visible]);
 
   useEffect(() => {

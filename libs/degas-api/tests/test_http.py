@@ -79,9 +79,7 @@ def test_validate_loss_returns_params(client: TestClient) -> None:
 
 
 def test_validate_loss_returns_errors(client: TestClient) -> None:
-    response = client.post(
-        "/api/optimization/loss/validate", json={"source": "loss broken( ="}
-    )
+    response = client.post("/api/optimization/loss/validate", json={"source": "loss broken( ="})
 
     body = response.json()
     assert response.status_code == 200
@@ -90,9 +88,7 @@ def test_validate_loss_returns_errors(client: TestClient) -> None:
 
 
 def test_validate_loss_rejects_oversized_source(client: TestClient) -> None:
-    response = client.post(
-        "/api/optimization/loss/validate", json={"source": "x" * 20_001}
-    )
+    response = client.post("/api/optimization/loss/validate", json={"source": "x" * 20_001})
 
     assert response.status_code == 422
 
@@ -126,9 +122,7 @@ def test_static_dir_serves_ui(static_client: TestClient) -> None:
 
 
 @pytest.mark.parametrize("path", ["/..%2Fsecret.txt", "/nested%2F..%2F..%2Fsecret.txt"])
-def test_static_dir_does_not_serve_files_outside_it(
-    static_client: TestClient, path: str
-) -> None:
+def test_static_dir_does_not_serve_files_outside_it(static_client: TestClient, path: str) -> None:
     with static_client as client:
         response = client.get(path)
 

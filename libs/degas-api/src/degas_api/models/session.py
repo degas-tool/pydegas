@@ -9,9 +9,7 @@ class OptimizationSession(SQLModel, table=True):
     __tablename__ = "optimization_sessions"
 
     id: str = Field(primary_key=True)
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(UTC).replace(tzinfo=None)
-    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC).replace(tzinfo=None))
     expires_at: datetime
 
     owner_token: str = Field(default="")  # set on create, used to authorize rename/delete
@@ -31,6 +29,4 @@ class OptimizationSession(SQLModel, table=True):
     outcome: str | None = Field(default=None)
 
     def bump_ttl(self, days: int) -> None:
-        self.expires_at = datetime.now(UTC).replace(tzinfo=None) + timedelta(
-            days=days
-        )
+        self.expires_at = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=days)

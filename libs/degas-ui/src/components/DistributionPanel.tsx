@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import type { StepOut } from "../types";
-import { PlotlyChart, type PlotlyLayout, type PlotlyTrace } from "./PlotlyChart";
+import {
+  PlotlyChart,
+  type PlotlyLayout,
+  type PlotlyTrace,
+} from "./PlotlyChart";
 
 const COLORS = [
   "#6699cc",

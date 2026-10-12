@@ -8,7 +8,9 @@ const LANG = "degas-loss";
 
 const registerLanguage: BeforeMount = (monaco) => {
   defineEditorThemes(monaco);
-  if (monaco.languages.getLanguages().find((l: { id: string }) => l.id === LANG))
+  if (
+    monaco.languages.getLanguages().find((l: { id: string }) => l.id === LANG)
+  )
     return;
 
   monaco.languages.register({ id: LANG });
@@ -16,7 +18,18 @@ const registerLanguage: BeforeMount = (monaco) => {
   monaco.languages.setMonarchTokensProvider(LANG, {
     keywords: ["loss"],
     types: ["dist", "traj_set", "index_list", "scalar", "int"],
-    builtins: ["sum", "mean_agg", "max", "min", "log", "exp", "abs", "sqrt", "range", "ones"],
+    builtins: [
+      "sum",
+      "mean_agg",
+      "max",
+      "min",
+      "log",
+      "exp",
+      "abs",
+      "sqrt",
+      "range",
+      "ones",
+    ],
     accessors: ["mean", "marg_pdf", "pdf", "var"],
     tokenizer: {
       root: [
@@ -56,7 +69,13 @@ type Props = {
   readOnly?: boolean;
 };
 
-export function LossDSLEditor({ theme, value, onChange, onValidate, readOnly = false }: Props) {
+export function LossDSLEditor({
+  theme,
+  value,
+  onChange,
+  onValidate,
+  readOnly = false,
+}: Props) {
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
   const monacoRef = useRef<Parameters<OnMount>[1] | null>(null);
   const [editorReady, setEditorReady] = useState(false);
@@ -92,15 +111,17 @@ export function LossDSLEditor({ theme, value, onChange, onValidate, readOnly = f
               if (!m) return [];
               const line = parseInt(m[1], 10);
               const col = parseInt(m[2], 10) + 1;
-              return [{
-                severity: monaco.MarkerSeverity.Error,
-                startLineNumber: line,
-                startColumn: col,
-                endLineNumber: line,
-                endColumn: col + 10,
-                message: m[3],
-                source: "degas-loss",
-              }];
+              return [
+                {
+                  severity: monaco.MarkerSeverity.Error,
+                  startLineNumber: line,
+                  startColumn: col,
+                  endLineNumber: line,
+                  endColumn: col + 10,
+                  message: m[3],
+                  source: "degas-loss",
+                },
+              ];
             });
             monaco.editor.setModelMarkers(model, "degas-loss", markers);
           }

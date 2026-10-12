@@ -4,6 +4,7 @@ from types import FrameType
 
 from loguru import logger
 
+
 _handler_ids: list[int] = []
 
 

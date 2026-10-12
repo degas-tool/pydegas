@@ -1,6 +1,8 @@
 from fastapi.routing import APIRouter
+
 from .optimization import router as optimization_router
 from .sessions import router as sessions_router
+
 
 API_VERSION_PREFIX = "/api"
 

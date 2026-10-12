@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Awaitable
+from typing import cast
 
 from loguru import logger
 from redis.asyncio import Redis
+
 
 # Lua script for atomic check-and-increment (avoids TOCTOU race on the cap).
 _ACQUIRE_SCRIPT = """
@@ -37,8 +40,9 @@ class OptimizationRateLimiter:
     async def try_acquire_slot(self) -> bool:
         """Atomically acquire a concurrency slot. Returns True if acquired."""
         acquired = bool(
-            await self._redis.eval(
-                _ACQUIRE_SCRIPT, 1, _ACTIVE_KEY, self._max_concurrent
+            await cast(
+                Awaitable[int],
+                self._redis.eval(_ACQUIRE_SCRIPT, 1, _ACTIVE_KEY, self._max_concurrent),
             )
         )
         if acquired:
@@ -50,6 +54,9 @@ class OptimizationRateLimiter:
                 "concurrency limit reached; max={max}", max=self._max_concurrent
             )
         return acquired
+
+    async def reset_slots(self) -> None:
+        await self._redis.set(_ACTIVE_KEY, 0)
 
     async def release_slot(self) -> None:
         val = await self._redis.decr(_ACTIVE_KEY)

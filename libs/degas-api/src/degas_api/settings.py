@@ -1,25 +1,26 @@
 from dotenv import find_dotenv, load_dotenv
+from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 load_dotenv(dotenv_path=find_dotenv(usecwd=True))
 
 
-class LoggingSettings(BaseSettings):
+class LoggingSettings(BaseModel):
     level: str = "INFO"
 
 
-class RedisRateLimiterSettings(BaseSettings):
+class RedisRateLimiterSettings(BaseModel):
     enabled: bool = True
     host: str = "localhost"
-    port: str = "6379"
+    port: int = 6379
     db: int = 0
     password: str | None = None
     username: str | None = None
     ssl: bool = False
 
 
-class OptimizationLimitsSettings(BaseSettings):
+class OptimizationLimitsSettings(BaseModel):
     max_concurrent_runs: int = 2
     max_steps: int = 500
     rate_limit_requests: int = 20

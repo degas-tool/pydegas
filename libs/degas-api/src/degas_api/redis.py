@@ -1,32 +1,14 @@
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from redis.asyncio import Redis
 
-import redis.asyncio as redis_asyncio
-from loguru import logger
+from degas_api.settings import RedisRateLimiterSettings
 
 
-@asynccontextmanager
-async def initialize_redis_pool(
-    host: str, port: int, db: int, password: str
-) -> AsyncIterator[redis_asyncio.Redis]:
-    logger.info(
-        "initializing redis client host={host} port={port} db={db}",
-        host=host,
-        port=port,
+def create_redis_client(settings: RedisRateLimiterSettings) -> Redis:
+    return Redis(
+        host=settings.host,
+        port=settings.port,
+        db=settings.db,
+        username=settings.username,
+        password=settings.password,
+        ssl=settings.ssl,
     )
-    session = redis_asyncio.Redis.from_url(
-        f"redis://{host}:{port}/{db}",
-        password=password,
-    )
-
-    await session.ping()
-    try:
-        yield session
-    finally:
-        await session.close()
-        logger.info(
-            "redis session closed with host {host}/{port}/{db}",
-            host=host,
-            port=port,
-            db=db,
-        )

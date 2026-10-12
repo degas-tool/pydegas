@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlmodel import Field, SQLModel
 
@@ -10,7 +10,7 @@ class OptimizationSession(SQLModel, table=True):
 
     id: str = Field(primary_key=True)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+        default_factory=lambda: datetime.now(UTC).replace(tzinfo=None)
     )
     expires_at: datetime
 
@@ -31,6 +31,6 @@ class OptimizationSession(SQLModel, table=True):
     outcome: str | None = Field(default=None)
 
     def bump_ttl(self, days: int) -> None:
-        self.expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(
+        self.expires_at = datetime.now(UTC).replace(tzinfo=None) + timedelta(
             days=days
         )

@@ -2,17 +2,18 @@ from __future__ import annotations
 
 import json
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from loguru import logger
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from degas_api.db import get_db
 from degas_api.models.session import OptimizationSession
 from degas_api.settings import app_settings
-from loguru import logger
+
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
 
@@ -20,7 +21,7 @@ DbSession = Annotated[Session, Depends(get_db)]
 
 
 def degas_now() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 class CreateSessionRequest(BaseModel):
@@ -63,6 +64,12 @@ class SessionSummary(BaseModel):
     outcome: str | None
 
 
+def _is_owner(row: OptimizationSession, token: str | None) -> bool:
+    if not token or not row.owner_token:
+        return False
+    return secrets.compare_digest(row.owner_token.encode(), token.encode())
+
+
 def _to_response(s: OptimizationSession) -> SessionResponse:
     return SessionResponse(
         id=s.id,
@@ -98,13 +105,15 @@ def create_session(body: CreateSessionRequest, db: DbSession) -> SessionCreateRe
 
 
 @router.get("", response_model=list[SessionSummary])
-def list_sessions(db: DbSession, limit: int = 50) -> list[SessionSummary]:
+def list_sessions(
+    db: DbSession, limit: Annotated[int, Query(ge=1, le=100)] = 50
+) -> list[SessionSummary]:
     now = degas_now()
     rows = db.exec(
         select(OptimizationSession)
-        .where(OptimizationSession.expires_at > now)
-        .order_by(OptimizationSession.created_at.desc())
-        .limit(min(limit, 100))
+        .where(col(OptimizationSession.expires_at) > now)
+        .order_by(col(OptimizationSession.created_at).desc())
+        .limit(limit)
     ).all()
     return [
         SessionSummary(
@@ -143,7 +152,7 @@ def patch_session(
     if row is None:
         raise HTTPException(status_code=404, detail="Session not found.")
     if body.name is not None:
-        if not x_owner_token or row.owner_token != x_owner_token:
+        if not _is_owner(row, x_owner_token):
             raise HTTPException(status_code=403, detail="Invalid owner token.")
         row.name = body.name.strip() or None
     if body.steps is not None:
@@ -167,7 +176,7 @@ def delete_session(
     row = db.get(OptimizationSession, session_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Session not found.")
-    if not x_owner_token or row.owner_token != x_owner_token:
+    if not _is_owner(row, x_owner_token):
         raise HTTPException(status_code=403, detail="Invalid owner token.")
     db.delete(row)
     db.commit()

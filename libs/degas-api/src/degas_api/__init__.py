@@ -1,13 +1,13 @@
+from importlib.metadata import PackageNotFoundError, version
+
 from .settings import app_settings
 
 
 def get_version() -> str:
     try:
-        import importlib.metadata
-
-        return importlib.metadata.version("degas-api")
-    except importlib.metadata.PackageNotFoundError:
-        return "0.0.0-unknown"
+        return version("degas-api")
+    except PackageNotFoundError:
+        return "0.0.0"
 
 
 __version__: str = get_version()

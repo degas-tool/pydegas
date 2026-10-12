@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import time
 from collections.abc import Awaitable, Callable
+from uuid import uuid4
 
 from fastapi import Request, Response
 from loguru import logger
-from uuid import uuid4
 
 
 async def add_security_headers(

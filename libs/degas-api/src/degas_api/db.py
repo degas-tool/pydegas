@@ -3,20 +3,30 @@ from __future__ import annotations
 from collections.abc import Generator
 
 from sqlalchemy import Engine
+from sqlalchemy.schema import CreateIndex, CreateTable
 from sqlmodel import Session, SQLModel, create_engine
+
 
 _engine: Engine | None = None
 
 
+def _create_tables(engine: Engine) -> None:
+    with engine.begin() as connection:
+        for table in SQLModel.metadata.sorted_tables:
+            connection.execute(CreateTable(table, if_not_exists=True))
+            for index in table.indexes:
+                connection.execute(CreateIndex(index, if_not_exists=True))
+
+
 def init_db(db_path: str) -> None:
     global _engine
+    if _engine is not None:
+        _engine.dispose()
     _engine = create_engine(
         f"sqlite:///{db_path}",
         connect_args={"check_same_thread": False},
-        # WAL mode survives concurrent reads during an optimization run
-        execution_options={"sqlite_pragma_journal_mode": "WAL"},
     )
-    SQLModel.metadata.create_all(_engine)
+    _create_tables(_engine)
 
 
 def get_engine() -> Engine:

@@ -1,32 +1,25 @@
 import time
-from collections.abc import Callable
-from contextlib import AbstractAsyncContextManager
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from loguru import logger
 from starlette import status
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from loguru import logger
-
 from degas_api import __version__, middlewares
-from degas_api.settings import app_settings
+from degas_api.lifespan import AppLifespan, create_lifespan
 from degas_api.log_config import configure_logging
 from degas_api.routers import api_router
-from degas_api.lifespan import create_lifespan
-
-type AppLifespan = Callable[[FastAPI], AbstractAsyncContextManager[Any]]
+from degas_api.settings import app_settings
 
 
 def create_app(
-    routers: list[tuple[APIRouter, dict]] = [(api_router, {})],
-    lifespan: AppLifespan = create_lifespan(
-        host=app_settings.host, port=app_settings.port
-    ),
-    docs_url: str = app_settings.docs_url,
+    routers: list[tuple[APIRouter, dict[str, Any]]] | None = None,
+    lifespan: AppLifespan | None = None,
+    docs_url: str | None = None,
 ) -> FastAPI:
     """Create a FastAPI app with the given routers."""
     from degas_api.docs.api import (
@@ -34,6 +27,15 @@ def create_app(
         FASTAPI_SUMMARY,
         FASTAPI_TITLE,
     )
+
+    if routers is None:
+        routers = [(api_router, {})]
+    if docs_url is None:
+        docs_url = app_settings.docs_url
+    if lifespan is None:
+        lifespan = create_lifespan(
+            host=app_settings.host, port=app_settings.port, docs_url=docs_url
+        )
 
     configure_logging(level=app_settings.logging.level)
 
@@ -62,19 +64,17 @@ def create_app(
             media_type="application/json; charset=utf-8",
         )
 
-    # Reject requests whose Host header isn't in the allowlist.
-    # Must be added before other middleware so scanners are dropped early.
-    if app_settings.allowed_hosts != ["*"]:
-        app.add_middleware(
-            TrustedHostMiddleware,
-            allowed_hosts=app_settings.allowed_hosts,
-        )
-
     app.middleware("http")(middlewares.logging_context_middleware())
     app.middleware("http")(middlewares.add_request_id_header)
     app.middleware("http")(middlewares.api_version_middleware(__version__))
     app.middleware("http")(middlewares.add_request_duration_header)
     app.middleware("http")(middlewares.add_security_headers)
+
+    if app_settings.allowed_hosts != ["*"]:
+        app.add_middleware(
+            TrustedHostMiddleware,
+            allowed_hosts=app_settings.allowed_hosts,
+        )
 
     for router, options in routers:
         app.include_router(router, **options)
@@ -94,22 +94,26 @@ def create_app(
 
     static_dir = Path(app_settings.static_dir) if app_settings.static_dir else None
     if static_dir is not None and static_dir.exists():
-        assets_dir = static_dir / "assets"
+        static_root = static_dir.resolve()
+        assets_dir = static_root / "assets"
         if assets_dir.exists():
             app.mount("/assets", StaticFiles(directory=assets_dir), name="spa-assets")
 
         @app.get("/{full_path:path}", include_in_schema=False)
         async def serve_spa(full_path: str) -> FileResponse:
-            file_path = static_dir / full_path
-            if file_path.is_file():
+            if full_path == "api" or full_path.startswith("api/"):
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+            file_path = (static_root / full_path).resolve()
+            if file_path.is_relative_to(static_root) and file_path.is_file():
                 return FileResponse(file_path)
-            return FileResponse(static_dir / "index.html")
+            return FileResponse(static_root / "index.html")
 
     else:
+        root_target = docs_url
 
         @app.get("/", tags=["root"])
-        async def redirect_to_docs_root():
+        async def redirect_to_docs_root() -> RedirectResponse:
             logger.debug("Redirecting to docs")
-            return RedirectResponse(url=docs_url)
+            return RedirectResponse(url=root_target)
 
     return app

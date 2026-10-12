@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import type { RunOutcome, RunStatus, StepOut } from "../types";
+import { PlotlyChart, type PlotlyLayout, type PlotlyTrace } from "./PlotlyChart";
 
 // Badge label + color per terminal outcome.
 const OUTCOME_BADGE: Record<RunOutcome, { label: string; color: string }> = {
@@ -29,11 +30,20 @@ interface Props {
   outcome: RunOutcome | null;
   slowStep: boolean;
   theme: "light" | "dark";
-  canDownload: boolean;
+  downloadBlocker: string | null;
   onDownload: () => void;
 }
 
-export function ResultsPanel({ steps, status, error, outcome, slowStep, theme, canDownload, onDownload }: Props) {
+export function ResultsPanel({
+  steps,
+  status,
+  error,
+  outcome,
+  slowStep,
+  theme,
+  downloadBlocker,
+  onDownload,
+}: Props) {
   const dark = theme === "dark";
   const bg = dark ? "#0a0a0a" : "#fafaf9";
   const fg = dark ? "#e8e6e0" : "#1a1a1a";
@@ -66,14 +76,12 @@ export function ResultsPanel({ steps, status, error, outcome, slowStep, theme, c
   const isVisible = (key: string) => !hidden.has(key);
 
   const isEmpty = steps.length === 0;
+  const canDownload = downloadBlocker === null;
   const finalParams = steps.length > 0 ? steps[steps.length - 1].params : null;
-  const plotRef = useRef<HTMLDivElement>(null);
+  const badge = outcome !== null ? OUTCOME_BADGE[outcome] : undefined;
 
-  useEffect(() => {
-    if (isEmpty || !plotRef.current) return;
-
+  const data = useMemo<PlotlyTrace[]>(() => {
     const xs = steps.map((s) => s.step);
-
     const safeNum = (v: number) => (Number.isFinite(v) ? v : null);
 
     const lossTrace = {
@@ -84,7 +92,7 @@ export function ResultsPanel({ steps, status, error, outcome, slowStep, theme, c
       mode: "lines",
       yaxis: "y",
       line: { color: "#f99157", width: 2 },
-      visible: isVisible("loss") ? true : "legendonly",
+      visible: hidden.has("loss") ? "legendonly" : true,
     };
 
     const paramTraces = paramNames.map((name, i) => ({
@@ -95,10 +103,14 @@ export function ResultsPanel({ steps, status, error, outcome, slowStep, theme, c
       mode: "lines",
       yaxis: "y2",
       line: { color: traceColor(i), width: 2 },
-      visible: isVisible(name) ? true : "legendonly",
+      visible: hidden.has(name) ? "legendonly" : true,
     }));
 
-    const layout = {
+    return [lossTrace, ...paramTraces];
+  }, [steps, paramNames, hidden]);
+
+  const layout = useMemo<PlotlyLayout>(
+    () => ({
       paper_bgcolor: bg,
       plot_bgcolor: bg,
       font: {
@@ -137,22 +149,9 @@ export function ResultsPanel({ steps, status, error, outcome, slowStep, theme, c
         yanchor: "top",
       },
       showlegend: false,
-    };
-
-    const config = { displayModeBar: false, responsive: true };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const Plotly = (window as any).Plotly;
-    if (Plotly && plotRef.current) {
-      Plotly.react(
-        plotRef.current,
-        [lossTrace, ...paramTraces],
-        layout,
-        config,
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [steps, hidden, theme]);
+    }),
+    [bg, fg, grid],
+  );
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -192,18 +191,18 @@ export function ResultsPanel({ steps, status, error, outcome, slowStep, theme, c
               {steps.length} steps
             </span>
           )}
-          {outcome !== null && status === "done" && (
+          {badge && status === "done" && (
             <span
               style={{
                 fontSize: 10,
                 padding: "2px 7px",
                 borderRadius: 20,
-                background: `${OUTCOME_BADGE[outcome].color}22`,
-                border: `1px solid ${OUTCOME_BADGE[outcome].color}`,
-                color: OUTCOME_BADGE[outcome].color,
+                background: `${badge.color}22`,
+                border: `1px solid ${badge.color}`,
+                color: badge.color,
               }}
             >
-              {OUTCOME_BADGE[outcome].label}
+              {badge.label}
             </span>
           )}
           {status === "error" && (
@@ -224,7 +223,7 @@ export function ResultsPanel({ steps, status, error, outcome, slowStep, theme, c
             type="button"
             onClick={onDownload}
             disabled={!canDownload}
-            title="Download run data (JSON)"
+            title={downloadBlocker ?? "Download run data (JSON)"}
             style={{
               display: "flex",
               alignItems: "center",
@@ -314,7 +313,6 @@ export function ResultsPanel({ steps, status, error, outcome, slowStep, theme, c
         </div>
       )}
 
-      {/* Plotly div stays mounted to keep the ref alive */}
       <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
         <div
           style={{
@@ -330,14 +328,7 @@ export function ResultsPanel({ steps, status, error, outcome, slowStep, theme, c
         >
           run optimization to see results
         </div>
-        <div
-          ref={plotRef}
-          style={{
-            width: "100%",
-            height: "100%",
-            display: isEmpty ? "none" : "block",
-          }}
-        />
+        <PlotlyChart data={data} layout={layout} visible={!isEmpty} />
       </div>
     </div>
   );

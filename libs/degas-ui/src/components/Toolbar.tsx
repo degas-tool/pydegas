@@ -5,8 +5,11 @@ import type {
   LossMode,
   LossParamInfo,
   OptimizationRequest,
+  Pruning,
   RunStatus,
 } from "../types";
+
+const DEFAULT_PRUNING_STRATEGIES: Pruning[] = ["classic", "ranking", "kmeans"];
 
 function toNumber(s: string): number {
   const n = parseFloat(s);
@@ -16,6 +19,28 @@ function toNumber(s: string): number {
 function toInt(s: string): number {
   const n = parseInt(s, 10);
   return isNaN(n) ? 0 : n;
+}
+
+function optionalNumber(s: string): number | undefined {
+  const n = parseFloat(s);
+  return isNaN(n) ? undefined : n;
+}
+
+function optionalInt(s: string): number | undefined {
+  const n = parseInt(s, 10);
+  return isNaN(n) ? undefined : n;
+}
+
+function parseJson(s: string): unknown {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return undefined;
+  }
+}
+
+function stringify(values: Record<string, unknown>): Record<string, string> {
+  return Object.fromEntries(Object.entries(values).map(([k, v]) => [k, String(v)]));
 }
 
 const SELECT: React.CSSProperties = {
@@ -61,8 +86,8 @@ const ROW: React.CSSProperties = {
 
 const TIP = {
   optimizer:
-    "torch.optim optimizer used to update the parameters each step (Adam, AdamW, SGD, RMSprop, Adagrad, LBFGS). ",
-  lr: "Learning rate handed to the torch optimizer.",
+    "torch.optim optimizer used to update the parameters each step (Adam, AdamW, SGD, RMSprop, Adagrad, LBFGS).",
+  lr: "Learning rate handed to the torch optimizer. Empty uses the optimizer's default.",
   steps:
     "Maximum number of gradient-descent steps. Each step recomputes the output distribution, evaluates the loss, and updates the parameters; the run stops early if it converges.",
   tol: "Convergence threshold on loss change: the run is flagged converged when the loss moves by less than this between every step in the patience window. Empty disables early stopping.",
@@ -70,6 +95,8 @@ const TIP = {
     "Number of consecutive steps whose loss must stay within tol before the run is flagged converged.",
   smoothEps:
     "Smoothing width applied by smooth() to conditional branches so gradients can flow through them.",
+  pruning:
+    "Method used to reduce the mixture at prune(k) statements and at Kmax: classic merges the closest components, ranking keeps the heaviest, kmeans clusters the components by their means and merges each cluster (random).",
   loss: "Objective minimized over the program's output distribution. Switch to 'custom' to view/edit each definition in the loss editor.",
   initialParam:
     "Initial value of this optimized parameter. Each _par becomes a grad-tracked tensor the optimizer updates from this starting point.",
@@ -182,6 +209,7 @@ interface Props {
   onLossModeChange: (mode: LossMode) => void;
   lossFunctions: LossFunctionInfo[];
   optimizers: string[];
+  pruningStrategies: string[];
   status: RunStatus;
   onRun: (req: OptimizationRequest) => void;
   onAbort: () => void;
@@ -199,6 +227,7 @@ export function Toolbar({
   onLossModeChange,
   lossFunctions,
   optimizers,
+  pruningStrategies,
   status,
   onRun,
   onAbort,
@@ -209,20 +238,14 @@ export function Toolbar({
   const [selectedExample, setSelectedExample] = useState(firstExample.label);
   const [optimizer, setOptimizer] = useState(firstExample.optimizer);
   const [lossKwargs, setLossKwargs] = useState<Record<string, string>>(
-    Object.fromEntries(
-      Object.entries(firstExample.loss_kwargs).map(([k, v]) => [k, String(v)]),
-    ),
+    stringify(firstExample.loss_kwargs),
   );
   const [paramValues, setParamValues] = useState<Record<string, string>>(
-    Object.fromEntries(
-      Object.entries(firstExample.initial_params).map(([k, v]) => [
-        k,
-        String(v),
-      ]),
-    ),
+    stringify(firstExample.initial_params),
   );
   const [nSteps, setNSteps] = useState(String(firstExample.n_steps));
-  const [lr, setLr] = useState("0.2");
+  const [lr, setLr] = useState(String(firstExample.optimizer_kwargs.lr));
+  const [pruning, setPruning] = useState<Pruning>(firstExample.pruning);
   const [tolerance, setTolerance] = useState("1e-8");
   const [patience, setPatience] = useState("30");
   const [smoothEps, setSmoothEps] = useState("0.001");
@@ -258,17 +281,11 @@ export function Toolbar({
     if (!ex) return;
     setSelectedExample(label);
     setOptimizer(ex.optimizer);
+    setLr(String(ex.optimizer_kwargs.lr));
+    setPruning(ex.pruning);
     onLossNameChange(ex.loss_function);
-    setLossKwargs(
-      Object.fromEntries(
-        Object.entries(ex.loss_kwargs).map(([k, v]) => [k, String(v)]),
-      ),
-    );
-    setParamValues(
-      Object.fromEntries(
-        Object.entries(ex.initial_params).map(([k, v]) => [k, String(v)]),
-      ),
-    );
+    setLossKwargs(stringify(ex.loss_kwargs));
+    setParamValues(stringify(ex.initial_params));
     setNSteps(String(ex.n_steps));
     setTrajShapes({});
     onSelectExample(ex);
@@ -301,12 +318,15 @@ export function Toolbar({
     const trimmedEps = smoothEps.trim();
     const epsNum = trimmedEps === "" ? null : parseFloat(trimmedEps);
 
+    const lrNum = optionalNumber(lr);
+
     const base = {
       program,
       program_language: "soga_highlevel" as const,
       compile_seed: 0,
       optimizer,
-      optimizer_kwargs: { lr: toNumber(lr) },
+      optimizer_kwargs: lrNum === undefined ? {} : { lr: lrNum },
+      pruning,
       initial_params: Object.fromEntries(
         Object.entries(paramValues).map(([k, v]) => [k, toNumber(v)]),
       ),
@@ -324,7 +344,7 @@ export function Toolbar({
         if (p.type === "traj_set") {
           try { parsedBindings[p.name] = JSON.parse(raw); } catch { /* skip */ }
         } else if (p.type === "index_list") {
-          parsedBindings[p.name] = raw.split(",").map((s) => toInt(s.trim())).filter((n) => !isNaN(n));
+          parsedBindings[p.name] = raw.split(",").map((s) => toInt(s.trim()));
         } else if (p.type === "scalar") {
           parsedBindings[p.name] = toNumber(raw);
         } else if (p.type === "int") {
@@ -337,22 +357,21 @@ export function Toolbar({
     }
 
     const parsedLossKwargs: Record<string, unknown> = {};
-    const schemaParams = selectedLossInfo?.params ?? [];
-    if (schemaParams.length > 0) {
-      for (const p of schemaParams) {
-        const raw = lossKwargs[p.name] ?? "";
-        if (p.type === "float") parsedLossKwargs[p.name] = toNumber(raw);
-        else if (p.type === "int") parsedLossKwargs[p.name] = toInt(raw);
-        else if (p.type === "int[]")
-          parsedLossKwargs[p.name] = raw.split(",").map((s) => toInt(s.trim()));
-        else {
-          try { parsedLossKwargs[p.name] = JSON.parse(raw); } catch { /* leave out */ }
-        }
+    if (selectedLossInfo) {
+      for (const p of selectedLossInfo.params) {
+        const raw = (lossKwargs[p.name] ?? "").trim();
+        if (raw === "") continue;
+        let value: unknown;
+        if (p.type === "float") value = optionalNumber(raw);
+        else if (p.type === "int") value = optionalInt(raw);
+        else if (p.type === "int[]") value = raw.split(",").map((s) => toInt(s.trim()));
+        else value = parseJson(raw);
+        if (value !== undefined) parsedLossKwargs[p.name] = value;
       }
     } else {
       for (const [k, v] of Object.entries(lossKwargs)) {
-        const n = toNumber(v);
-        if (!isNaN(n)) parsedLossKwargs[k] = n;
+        const n = optionalNumber(v);
+        if (n !== undefined) parsedLossKwargs[k] = n;
       }
     }
     return { ...base, loss_function: lossName, loss_kwargs: parsedLossKwargs };
@@ -455,6 +474,7 @@ export function Toolbar({
             inputMode="decimal"
             style={{ ...INPUT, width: 56 }}
             value={lr}
+            placeholder="default"
             onChange={(e) => setLr(e.target.value)}
             disabled={running}
           />
@@ -513,6 +533,19 @@ export function Toolbar({
             disabled={running}
           />
 
+          <span style={LABEL} title={TIP.pruning}>pruning</span>
+          <select
+            style={SELECT}
+            value={pruning}
+            onChange={(e) => setPruning(e.target.value as Pruning)}
+            disabled={running}
+            title={TIP.pruning}
+          >
+            {(pruningStrategies.length > 0 ? pruningStrategies : DEFAULT_PRUNING_STRATEGIES).map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </select>
+
           <button
             type="button"
             onClick={running ? onAbort : () => onRun(buildRequest())}
@@ -569,7 +602,8 @@ export function Toolbar({
               <input
                 type="number"
                 style={INPUT}
-                value={lossKwargs[p.name] ?? (p.default != null ? String(p.default) : "")}
+                value={lossKwargs[p.name] ?? ""}
+                placeholder={p.default != null ? String(p.default) : undefined}
                 onChange={(e) =>
                   setLossKwargs((prev) => ({ ...prev, [p.name]: e.target.value }))
                 }

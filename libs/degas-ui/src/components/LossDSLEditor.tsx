@@ -1,11 +1,13 @@
-import Editor, { useMonaco, type BeforeMount, type OnMount } from "@monaco-editor/react";
-import { useEffect, useRef } from "react";
+import Editor, { type BeforeMount, type OnMount } from "@monaco-editor/react";
+import { useEffect, useRef, useState } from "react";
 import { validateLossSource } from "../api";
+import { defineEditorThemes, EDITOR_THEME } from "../monaco-theme";
 import type { LossParamInfo } from "../types";
 
 const LANG = "degas-loss";
 
 const registerLanguage: BeforeMount = (monaco) => {
+  defineEditorThemes(monaco);
   if (monaco.languages.getLanguages().find((l: { id: string }) => l.id === LANG))
     return;
 
@@ -44,56 +46,6 @@ const registerLanguage: BeforeMount = (monaco) => {
       ],
     },
   });
-
-  monaco.editor.defineTheme("degas-loss-dark", {
-    base: "vs-dark",
-    inherit: true,
-    rules: [
-      { token: "comment", foreground: "444444", fontStyle: "italic" },
-      { token: "keyword", foreground: "6699cc", fontStyle: "bold" },
-      { token: "type", foreground: "c594c5" },
-      { token: "builtin", foreground: "99c794" },
-      { token: "accessor", foreground: "fac863" },
-      { token: "number", foreground: "f99157" },
-      { token: "operator", foreground: "c594c5" },
-      { token: "identifier", foreground: "cdd3de" },
-      { token: "delimiter", foreground: "3a3a3a" },
-    ],
-    colors: {
-      "editor.background": "#111111",
-      "editor.foreground": "#cdd3de",
-      "editorLineNumber.foreground": "#2a2a2a",
-      "editorLineNumber.activeForeground": "#555555",
-      "editor.lineHighlightBackground": "#181818",
-      "editorCursor.foreground": "#6699cc",
-      "editor.selectionBackground": "#1e3a5f",
-    },
-  });
-
-  monaco.editor.defineTheme("degas-loss-light", {
-    base: "vs",
-    inherit: true,
-    rules: [
-      { token: "comment", foreground: "aaaaaa", fontStyle: "italic" },
-      { token: "keyword", foreground: "3a6fb5", fontStyle: "bold" },
-      { token: "type", foreground: "8b4fa8" },
-      { token: "builtin", foreground: "3a8a60" },
-      { token: "accessor", foreground: "b07d00" },
-      { token: "number", foreground: "c2621a" },
-      { token: "operator", foreground: "8b4fa8" },
-      { token: "identifier", foreground: "2a2a2a" },
-      { token: "delimiter", foreground: "bbbbbb" },
-    ],
-    colors: {
-      "editor.background": "#ffffff",
-      "editor.foreground": "#2a2a2a",
-      "editorLineNumber.foreground": "#dddddd",
-      "editorLineNumber.activeForeground": "#aaaaaa",
-      "editor.lineHighlightBackground": "#f7f5f2",
-      "editorCursor.foreground": "#3a6fb5",
-      "editor.selectionBackground": "#d0e4f7",
-    },
-  });
 };
 
 type Props = {
@@ -105,14 +57,10 @@ type Props = {
 };
 
 export function LossDSLEditor({ theme, value, onChange, onValidate, readOnly = false }: Props) {
-  const monaco = useMonaco();
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
+  const monacoRef = useRef<Parameters<OnMount>[1] | null>(null);
+  const [editorReady, setEditorReady] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (!monaco) return;
-    monaco.editor.setTheme(theme === "dark" ? "degas-loss-dark" : "degas-loss-light");
-  }, [monaco, theme]);
 
   const onValidateRef = useRef(onValidate);
   useEffect(() => {
@@ -120,6 +68,7 @@ export function LossDSLEditor({ theme, value, onChange, onValidate, readOnly = f
   });
 
   useEffect(() => {
+    const monaco = monacoRef.current;
     if (readOnly) {
       if (editorRef.current && monaco) {
         const model = editorRef.current.getModel();
@@ -127,10 +76,12 @@ export function LossDSLEditor({ theme, value, onChange, onValidate, readOnly = f
       }
       return;
     }
+    let cancelled = false;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       try {
         const result = await validateLossSource(value);
+        if (cancelled) return;
         onValidateRef.current(result.params, result.errors);
 
         if (editorRef.current && monaco) {
@@ -159,24 +110,27 @@ export function LossDSLEditor({ theme, value, onChange, onValidate, readOnly = f
       }
     }, 400);
     return () => {
+      cancelled = true;
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [value, readOnly, monaco]);
+  }, [value, readOnly, editorReady]);
 
   function handleChange(val: string | undefined) {
     if (readOnly) return;
     onChange(val ?? "");
   }
 
-  const handleMount: OnMount = (editor) => {
+  const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+    monacoRef.current = monaco;
+    setEditorReady(true);
   };
 
   return (
     <Editor
       height="100%"
       language={LANG}
-      theme={theme === "dark" ? "degas-loss-dark" : "degas-loss-light"}
+      theme={EDITOR_THEME[theme]}
       value={value}
       onChange={handleChange}
       onMount={handleMount}

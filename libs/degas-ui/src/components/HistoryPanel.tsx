@@ -44,6 +44,7 @@ interface Props {
   currentSessionId: string | null;
   onClose: () => void;
   onSelectSession: (id: string) => void;
+  onSessionDeleted: (id: string) => void;
 }
 
 export function HistoryPanel({
@@ -51,6 +52,7 @@ export function HistoryPanel({
   currentSessionId,
   onClose,
   onSelectSession,
+  onSessionDeleted,
 }: Props) {
   const [summaries, setSummaries] = useState<SessionSummary[] | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -58,6 +60,18 @@ export function HistoryPanel({
   const [editValue, setEditValue] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const editingIdRef = useRef<string | null>(null);
+
+  function startEditing(id: string, value: string) {
+    editingIdRef.current = id;
+    setEditValue(value);
+    setEditingId(id);
+  }
+
+  function stopEditing() {
+    editingIdRef.current = null;
+    setEditingId(null);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -82,8 +96,9 @@ export function HistoryPanel({
   }, [open, onClose]);
 
   async function handleRename(id: string) {
+    if (editingIdRef.current !== id) return;
     const trimmed = editValue.trim();
-    setEditingId(null);
+    stopEditing();
     if (!trimmed) return;
     const token = getOwnerToken(id);
     if (!token) return;
@@ -98,14 +113,12 @@ export function HistoryPanel({
     if (!token) return;
     try {
       await deleteSession(id, token);
-    } catch { /* empty */ }
+    } catch {
+      return;
+    }
     removeOwnerToken(id);
     setSummaries((prev) => prev?.filter((s) => s.id !== id) ?? null);
-    if (id === currentSessionId) {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("s");
-      window.history.pushState({}, "", url);
-    }
+    onSessionDeleted(id);
   }
 
   const iconBtn: React.CSSProperties = {
@@ -222,7 +235,7 @@ export function HistoryPanel({
                       onChange={(e) => setEditValue(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") handleRename(s.id);
-                        if (e.key === "Escape") setEditingId(null);
+                        if (e.key === "Escape") stopEditing();
                         e.stopPropagation();
                       }}
                       onBlur={() => handleRename(s.id)}
@@ -267,8 +280,7 @@ export function HistoryPanel({
                       onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setEditValue(s.name ?? s.loss_name);
-                        setEditingId(s.id);
+                        startEditing(s.id, s.name ?? s.loss_name);
                       }}
                     >
                       ✎

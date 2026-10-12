@@ -35,6 +35,8 @@ export interface LossValidateResponse {
 
 export type LossMode = 'builtin' | 'custom'
 
+export type Pruning = 'classic' | 'ranking' | 'kmeans'
+
 export interface OptimizationRequest {
   program: string
   program_language: 'soga' | 'soga_highlevel'
@@ -51,7 +53,7 @@ export interface OptimizationRequest {
   tolerance?: number | null
   patience?: number
   smooth_eps?: number | null
-  pruning?: 'classic' | 'ranking' | 'kmeans'
+  pruning?: Pruning
 }
 
 export type RunStatus = 'idle' | 'running' | 'done' | 'error'

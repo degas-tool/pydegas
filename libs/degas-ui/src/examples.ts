@@ -1,3 +1,5 @@
+import type { Pruning } from "./types";
+
 export interface Example {
   label: string;
   program: string;
@@ -6,8 +8,8 @@ export interface Example {
   loss_kwargs: Record<string, unknown>;
   n_steps: number;
   optimizer: string;
-  optimizer_kwargs: Record<string, unknown>;
-  pruning?: 'classic' | 'ranking' | 'kmeans';
+  optimizer_kwargs: { lr: number };
+  pruning: Pruning;
 }
 
 export const EXAMPLES: Example[] = [

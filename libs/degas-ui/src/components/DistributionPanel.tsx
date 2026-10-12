@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useMemo } from "react";
 import type { StepOut } from "../types";
+import { PlotlyChart, type PlotlyLayout, type PlotlyTrace } from "./PlotlyChart";
 
 const COLORS = [
   "#6699cc",
@@ -22,16 +23,13 @@ export function DistributionPanel({ steps, theme }: Props) {
   const grid = dark ? "#1e1e1e" : "#e2ddd8";
 
   const isEmpty = steps.length === 0;
-  const paramNames = isEmpty ? [] : Object.keys(steps[0].params);
-  const plotRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (isEmpty || !plotRef.current) return;
-
+  const data = useMemo<PlotlyTrace[]>(() => {
+    const paramNames = steps.length > 0 ? Object.keys(steps[0].params) : [];
     const xs = steps.map((s) => s.step);
     const safeNum = (v: number) => (Number.isFinite(v) ? v : null);
 
-    const traces = paramNames.map((name, i) => ({
+    return paramNames.map((name, i) => ({
       x: xs,
       y: steps.map((s) => safeNum(s.params[name] ?? NaN)),
       name: `_${name}`,
@@ -39,8 +37,10 @@ export function DistributionPanel({ steps, theme }: Props) {
       mode: "lines",
       line: { color: COLORS[i % COLORS.length], width: 2 },
     }));
+  }, [steps]);
 
-    const layout = {
+  const layout = useMemo<PlotlyLayout>(
+    () => ({
       paper_bgcolor: bg,
       plot_bgcolor: bg,
       font: {
@@ -78,18 +78,9 @@ export function DistributionPanel({ steps, theme }: Props) {
         yanchor: "top",
       },
       showlegend: true,
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const Plotly = (window as any).Plotly;
-    if (Plotly && plotRef.current) {
-      Plotly.react(plotRef.current, traces, layout, {
-        displayModeBar: false,
-        responsive: true,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [steps, theme]);
+    }),
+    [bg, fg, grid],
+  );
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -117,14 +108,7 @@ export function DistributionPanel({ steps, theme }: Props) {
         >
           run optimization to see parameter trajectory
         </div>
-        <div
-          ref={plotRef}
-          style={{
-            width: "100%",
-            height: "100%",
-            display: isEmpty ? "none" : "block",
-          }}
-        />
+        <PlotlyChart data={data} layout={layout} visible={!isEmpty} />
       </div>
     </div>
   );

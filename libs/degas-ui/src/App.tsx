@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetchLossFunctions, fetchOptimizers, fetchHealth, createSession, getSession, patchSession, type ServerHealth } from "./api";
+import {
+  createSession,
+  fetchHealth,
+  fetchLossFunctions,
+  fetchOptimizers,
+  fetchPruningStrategies,
+  getSession,
+  patchSession,
+  type ServerHealth,
+} from "./api";
 import { buildExportBundle, downloadBundle } from "./export";
 import { SogaEditor } from "./components/SogaEditor";
 import { LossDSLEditor } from "./components/LossDSLEditor";
@@ -14,7 +23,40 @@ import { setOwnerToken } from "./session-storage";
 import { EXAMPLES } from "./examples";
 import { useOptimization } from "./hooks/useOptimization";
 import { useTheme } from "./hooks/useTheme";
-import type { LossFunctionInfo, LossMode, LossParamInfo, OptimizationRequest, RunErrorKind, RunOutcome } from "./types";
+import type { Example } from "./examples";
+import type {
+  LossFunctionInfo,
+  LossMode,
+  LossParamInfo,
+  OptimizationRequest,
+  RunErrorKind,
+  RunOutcome,
+} from "./types";
+
+const RUN_OUTCOMES: readonly string[] = ["converged", "not_converged", "stopped", "run_timeout"] satisfies RunOutcome[];
+
+function toRunOutcome(value: string | null): RunOutcome | null {
+  return value !== null && RUN_OUTCOMES.includes(value) ? (value as RunOutcome) : null;
+}
+
+function parseRequest(json: string): OptimizationRequest | null {
+  try {
+    const value: unknown = JSON.parse(json);
+    if (typeof value === "object" && value !== null && typeof (value as { program?: unknown }).program === "string") {
+      return value as OptimizationRequest;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function setSessionParam(id: string | null): void {
+  const url = new URL(window.location.href);
+  if (id === null) url.searchParams.delete("s");
+  else url.searchParams.set("s", id);
+  window.history.replaceState({}, "", url);
+}
 
 function formatRunError(kind: RunErrorKind | null, detail: string): string {
   switch (kind) {
@@ -38,9 +80,9 @@ loss signal_error(d: dist, target: scalar) =
     sum( (d.mean[range(0, 5)] - ones(range(0, 5)) * target) ^ 2 )
 `;
 
-const REPO_URL = "https://github.com/frarandone/DeGAS";
-const SOGA_SYNTAX_URL = `${REPO_URL}#writing-and-compiling-a-program`;
-const LOSS_DSL_URL = `${REPO_URL}#loss-dsl`;
+const REPO_URL = "https://github.com/degas-tool/pydegas";
+const SOGA_SYNTAX_URL = `${REPO_URL}/blob/main/libs/pydegas/docs/language.md`;
+const LOSS_DSL_URL = `${REPO_URL}/blob/main/libs/pydegas/docs/loss-dsl.md`;
 
 const PANEL: React.CSSProperties = {
   border: "1px solid var(--border)",
@@ -172,7 +214,7 @@ function NavLink({ href, title, children }: { href: string; title: string; child
 
 export default function App() {
   const { theme, toggle } = useTheme();
-  const { steps, status, error, errorKind, outcome, slowStep, lastRequest, wallClockMs, run, abort, restoreSteps } = useOptimization();
+  const { steps, status, error, errorKind, outcome, slowStep, lastRequest, wallClockMs, run, abort, restoreRun } = useOptimization();
   const displayError = error == null ? null : formatRunError(errorKind, error);
   // connection_lost is shown only in the toast; suppress the in-panel banner to avoid duplication
   const panelError = errorKind === 'connection_lost' ? null : displayError;
@@ -180,24 +222,27 @@ export default function App() {
   const [program, setProgram] = useState(EXAMPLES[0].program);
   const [lossFunctions, setLossFunctions] = useState<LossFunctionInfo[]>([]);
   const [optimizers, setOptimizers] = useState<string[]>([]);
+  const [pruningStrategies, setPruningStrategies] = useState<string[]>([]);
   const [dismissedError, setDismissedError] = useState<string | null>(null);
   const [health, setHealth] = useState<ServerHealth | null>(null);
   const healthTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Session state
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const sessionIdRef = useRef<string | null>(null);
+  const runSessionIdRef = useRef<string | null>(null);
+  const startingRef = useRef(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [sessionToast, setSessionToast] = useState<string | null>(null);
-
-  function setSessionId(id: string | null) {
-    setCurrentSessionId(id);
-    sessionIdRef.current = id;
-  }
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showToast = useCallback((msg: string, ms = 3000) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setSessionToast(msg);
-    setTimeout(() => setSessionToast(null), ms);
+    toastTimerRef.current = setTimeout(() => setSessionToast(null), ms);
+  }, []);
+
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
   }, []);
 
   const [lossMode, setLossMode] = useState<LossMode>("builtin");
@@ -243,6 +288,7 @@ export default function App() {
   useEffect(() => {
     fetchLossFunctions().then(setLossFunctions).catch(console.error);
     fetchOptimizers().then(setOptimizers).catch(console.error);
+    fetchPruningStrategies().then(setPruningStrategies).catch(console.error);
 
     function pollHealth() {
       fetchHealth().then(setHealth).catch(() => setHealth(null));
@@ -258,65 +304,78 @@ export default function App() {
     if (!sid) return;
     getSession(sid)
       .then((s) => {
-        const req = JSON.parse(s.request);
-        setProgram(req.program ?? program);
-        setLossMode(s.loss_mode as LossMode);
+        const req = parseRequest(s.request);
+        if (req) setProgram(req.program);
+        setLossMode(s.loss_mode);
         setLossName(s.loss_name);
-        if (s.loss_mode === "custom" && req.loss_source) setLossSource(req.loss_source);
-        if (s.steps.length > 0) restoreSteps(s.steps, (s.outcome ?? null) as RunOutcome | null);
-        setSessionId(sid);
+        if (s.loss_mode === "custom" && req?.loss_source) setLossSource(req.loss_source);
+        if (s.steps.length > 0) {
+          restoreRun({
+            steps: s.steps,
+            outcome: toRunOutcome(s.outcome),
+            request: req,
+            failed: s.status === "error",
+          });
+        }
+        setCurrentSessionId(sid);
         showToast(`viewing session ${sid}`);
       })
       .catch(() => {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("s");
-        window.history.replaceState({}, "", url);
+        setSessionParam(null);
         showToast("session not found or expired");
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [restoreRun, showToast]);
 
-  // Patch session when run finishes
   useEffect(() => {
-    const sid = sessionIdRef.current;
+    const sid = runSessionIdRef.current;
     if (!sid || (status !== "done" && status !== "error")) return;
+    runSessionIdRef.current = null;
     patchSession(sid, {
       steps,
-      status: status === "error" ? "error" : "done",
+      status,
       ...(outcome ? { outcome } : {}),
     }).catch(console.error);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status]);
+  }, [status, steps, outcome]);
 
   const handleRun = useCallback(async (req: OptimizationRequest) => {
-    try {
-      const session = await createSession({
-        loss_mode: lossMode,
-        loss_name: lossName,
-        request: JSON.stringify(req),
-      });
-      setSessionId(session.id);
-      if (session.owner_token) setOwnerToken(session.id, session.owner_token);
-      const url = new URL(window.location.href);
-      url.searchParams.set("s", session.id);
-      window.history.pushState({}, "", url);
-    } catch {
-      // Session creation failure is non-fatal — run continues without persistence
-    }
+    if (startingRef.current) return;
+    startingRef.current = true;
+    setDismissedError(null);
+    const session = await createSession({
+      loss_mode: lossMode,
+      loss_name: lossName,
+      request: JSON.stringify(req),
+    }).catch(() => null);
+    startingRef.current = false;
+    runSessionIdRef.current = session?.id ?? null;
+    setCurrentSessionId(session?.id ?? null);
+    setSessionParam(session?.id ?? null);
+    if (session?.owner_token) setOwnerToken(session.id, session.owner_token);
     run(req);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lossMode, lossName, run]);
 
   function handleNewOptimization() {
-    const url = new URL(window.location.href);
-    url.searchParams.delete("s");
-    window.history.pushState({}, "", url);
-    setSessionId(null);
+    setSessionParam(null);
+    setCurrentSessionId(null);
     showToast("ready for a new run", 2500);
   }
 
+  function handleSelectExample(ex: Example) {
+    setProgram(ex.program);
+    setLossMode("builtin");
+  }
+
+  const downloadBlocker =
+    status === "running"
+      ? "Data export is available when the run ends"
+      : steps.length === 0
+        ? "No run data to export"
+        : lastRequest === null
+          ? "This session has no saved run settings to export"
+          : null;
+
   function handleDownload() {
-    if (!lastRequest || steps.length === 0) return;
+    if (downloadBlocker !== null || lastRequest === null) return;
     const exportOutcome = status === "error" ? (errorKind ?? "error") : (outcome ?? "not_converged");
     downloadBundle(
       buildExportBundle({ steps, request: lastRequest, outcome: exportOutcome, error, wallClockMs }),
@@ -344,6 +403,12 @@ export default function App() {
         open={historyOpen}
         currentSessionId={currentSessionId}
         onClose={() => setHistoryOpen(false)}
+        onSessionDeleted={(id) => {
+          if (id === currentSessionId) {
+            setSessionParam(null);
+            setCurrentSessionId(null);
+          }
+        }}
         onSelectSession={(id) => {
           const url = new URL(window.location.href);
           url.searchParams.set("s", id);
@@ -399,13 +464,14 @@ export default function App() {
             href="https://github.com/ouz-m"
             target="_blank"
             rel="noopener noreferrer"
+            title="Author on GitHub"
             style={{ fontSize: 11, color: "var(--text-muted)", textDecoration: "none" }}
             onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
             onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-muted)")}
           >
             ouz-m
           </a>
-          <NavLink href={REPO_URL} title="View on GitHub (program & loss syntax docs)">
+          <NavLink href={REPO_URL} title="pydegas on GitHub">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
               <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
             </svg>
@@ -510,10 +576,11 @@ export default function App() {
             onLossModeChange={handleLossModeChange}
             lossFunctions={lossFunctions}
             optimizers={optimizers}
+            pruningStrategies={pruningStrategies}
             status={status}
             onRun={handleRun}
             onAbort={abort}
-            onSelectExample={(ex) => setProgram(ex.program)}
+            onSelectExample={handleSelectExample}
           />
         </div>
 
@@ -531,7 +598,7 @@ export default function App() {
                 outcome={outcome}
                 slowStep={slowStep}
                 theme={theme}
-                canDownload={steps.length > 0}
+                downloadBlocker={downloadBlocker}
                 onDownload={handleDownload}
               />
             </PanelErrorBoundary>

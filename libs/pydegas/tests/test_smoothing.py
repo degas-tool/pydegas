@@ -31,7 +31,7 @@ def test_constant_smoothing_adds_noise_with_requested_scale():
     from pydegas.semantics.engine import start_soga
 
     cfg = from_text("x = 2;")
-    assert smooth(cfg, smooth_eps=0.02) is None
+    smooth(cfg, smooth_eps=0.02)
     actual = start_soga(cfg)
     assert cfg.smoothed_vars == ["x"]
     assert actual.gm.mean().item() == pytest.approx(2.0)
@@ -57,6 +57,7 @@ def test_smoothing_relaxes_guard_by_five_sqrt_epsilon(operator, expected):
     cfg = from_text(f"x = 0; if x {operator} 0 {{ skip; }} else {{ skip; }} end if;")
     smooth(cfg, smooth_eps=0.01)
     branch = next(node for node in cfg.node_list.values() if isinstance(node, BranchNode))
+    assert branch.smooth is not None
     assert branch.smooth.replace(" ", "") == expected.replace(" ", "")
 
 

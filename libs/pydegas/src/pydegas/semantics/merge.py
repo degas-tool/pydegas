@@ -167,7 +167,7 @@ def classic_prune(current_dist: Dist, Kmax: int) -> Dist:
 
         # Computes the cost matrix
         matrix_mu = compute_matrix_mean(current_dist)
-        dist_matrix = torch.sum(torch.pow((current_dist.gm.mu - matrix_mu), 2), axis=2).T
+        dist_matrix = torch.sum(torch.pow((current_dist.gm.mu - matrix_mu), 2), dim=2).T
         weight_dist_matrix = current_dist.gm.pi.view(-1, 1) * dist_matrix
         cost_matrix = weight_dist_matrix + weight_dist_matrix.T
 
@@ -189,7 +189,7 @@ def classic_prune(current_dist: Dist, Kmax: int) -> Dist:
             # If number of components still too high adds a new row and column to the cost matrix, corresponding to the new component
             if n > Kmax:
                 # computes the costs for the newly added component
-                new_cost = torch.sum(torch.pow((current_dist.gm.mu[-1].unsqueeze(0) - matrix_mu[:, -1]), 2), axis=1)
+                new_cost = torch.sum(torch.pow((current_dist.gm.mu[-1].unsqueeze(0) - matrix_mu[:, -1]), 2), dim=1)
                 new_cost = new_cost.unsqueeze(0)
                 new_column = new_cost[:, :-1].T
                 new_row = new_cost

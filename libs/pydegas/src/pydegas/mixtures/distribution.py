@@ -36,8 +36,8 @@ class Dist:
 def extend_dist(parser: Any, dist: Dist) -> GaussianMix:
     """Extend *dist* with the auxiliary GM variables accumulated in *parser*.
 
-    *parser* is an ``ASGMTRule`` instance carrying ``aux_pis``, ``aux_means``,
-    and ``aux_covs`` populated during the ANTLR walk of the assignment expression.
+    *parser* is an ``AsgmtRule`` or ``TruncRule`` instance carrying ``aux_pis``,
+    ``aux_means`` and ``aux_covs`` populated during the ANTLR walk of the expression.
     If the parser has no auxiliary variables the original GM is returned unchanged.
 
     Returns the extended ``GaussianMix`` (not a ``Dist`` - the caller slices it

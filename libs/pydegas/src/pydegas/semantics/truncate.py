@@ -54,6 +54,7 @@ def _and_func(rule: TruncRule, distribution: Dist) -> tuple[torch.Tensor, Dist]:
     inequality_index = int(torch.where(rule.coefficients != 0)[0][0])
     lower = rule.lower_bound
     upper = rule.upper_bound
+    assert lower is not None and upper is not None
 
     # STEP 1: create the hyper-rectangle to integrate on
     lower_bounds = torch.ones(len(rule.coefficients)) * (-INFTY)

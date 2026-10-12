@@ -1,0 +1,62 @@
+services:
+
+  db:
+    image: redis:8.2.5-bookworm
+    restart: unless-stopped
+    shm_size: 128mb
+    volumes:
+      - db_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ui:
+    build:
+      context: libs/degas-ui
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    networks:
+      - internal
+    ports:
+      # Bind to loopback only - Caddy on the host is the public entry point.
+      - "127.0.0.1:3000:80"
+
+  api:
+    build:
+      context: .
+      dockerfile: libs/degas-api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DEGAS_API_OPTIMIZATION_RATE_LIMITER__HOST: db
+      DEGAS_API_ALLOWED_HOSTS: '["degas.dev","www.degas.dev","localhost"]'
+      DEGAS_API_DB_PATH: /data/sessions.db
+    volumes:
+      - sqlite_data:/data
+    networks:
+      - internal
+    ports:
+      # Bind to loopback only - Caddy on the host is the public entry point.
+      - "127.0.0.1:8000:8000"
+    command:
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--workers"
+      - "4"
+
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  db_data:
+  sqlite_data:

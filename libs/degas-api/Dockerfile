@@ -40,5 +40,8 @@ USER appuser
 
 EXPOSE 8000
 
-ENTRYPOINT ["/opt/venv/bin/uvicorn", "degas_api.server:create_app", "--factory"]
-CMD ["--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD ["degas-api", "health"]
+
+ENTRYPOINT ["degas-api"]
+CMD ["serve", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

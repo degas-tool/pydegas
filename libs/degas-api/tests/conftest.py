@@ -5,6 +5,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from degas_api.migrate import migrate
 from degas_api.server import create_app
 from degas_api.settings import (
     LoggingSettings,
@@ -16,7 +17,9 @@ from degas_api.settings import (
 
 @pytest.fixture(scope="session")
 def db_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    return tmp_path_factory.mktemp("degas-api") / "sessions.db"
+    path = tmp_path_factory.mktemp("degas-api") / "sessions.db"
+    migrate(str(path))
+    return path
 
 
 @pytest.fixture(autouse=True)

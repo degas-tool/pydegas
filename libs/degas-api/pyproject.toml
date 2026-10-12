@@ -12,6 +12,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
+    "alembic>=1.16,<2",
     "apscheduler>=3.10,<4",
     "fastapi>=0.136.1,<1",
     "loguru>=0.7.3,<0.8",
@@ -24,9 +25,13 @@ dependencies = [
     "sqlmodel>=0.0.22,<0.1",
     "starlette>=0.46,<2",
     "torch>=2.0,<3",
+    "typer>=0.20,<1",
     "uvicorn[standard]>=0.46,<1",
     "websockets>=16.0,<17",
 ]
+
+[project.scripts]
+degas-api = "degas_api.cli:app"
 
 [dependency-groups]
 dev = [

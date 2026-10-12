@@ -1,14 +1,12 @@
 import json
 from datetime import timedelta
-from pathlib import Path
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.dialects.sqlite.base import SQLiteDialect
 from sqlmodel import Session
 
-from degas_api.db import get_engine, init_db
+from degas_api.db import get_engine
 from degas_api.lifespan import cleanup_expired_sessions
 from degas_api.models.session import OptimizationSession
 from degas_api.routers.sessions import degas_now
@@ -178,14 +176,3 @@ def test_cleanup_removes_only_expired_sessions(client: TestClient) -> None:
     with Session(get_engine()) as db:
         assert db.get(OptimizationSession, gone["id"]) is None
         assert db.get(OptimizationSession, kept["id"]) is not None
-
-
-def test_init_db_tolerates_a_table_created_by_another_worker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    path = str(tmp_path / "race.db")
-    init_db(path)
-    monkeypatch.setattr(SQLiteDialect, "has_table", lambda *args, **kwargs: False)
-
-    init_db(path)
-
-    with Session(get_engine()) as db:
-        assert db.get(OptimizationSession, "missing") is None

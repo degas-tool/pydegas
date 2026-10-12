@@ -1,51 +1,115 @@
-ci:
-  autofix_commit_msg: "[pre-commit.ci] auto fixes from pre-commit.com hooks"
-  autofix_prs: true
-  autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
-  autoupdate_schedule: weekly
+minimum_pre_commit_version: "4.0.0"
 
-default_language_version:
-  python: python3.12
+exclude: |
+  (?x)^(
+      reference/
+    | libs/pydegas/src/pydegas/parse/(soga|asgmt|trunc|degas-loss)/
+    | libs/degas-ui/public/plotly\.js$
+  )
+
 repos:
-  - hooks:
-      - id: check-toml
-      - id: detect-private-key
-      - id: check-ast
-      - id: check-case-conflict
-      - id: check-docstring-first
-      - id: check-json
-      - id: check-merge-conflict
-      - id: debug-statements
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-    repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-
-  - hooks:
-      - id: mypy
-        args: [--config-file=.mypy.ini]
-        exclude: libs/pydegas/src/pydegas/parse/
-        additional_dependencies: ["types-redis"]
-    repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.12.0
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    # Ruff version.
-    rev: v0.14.9
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
     hooks:
-      # Run the linter.
-      - id: ruff-check
-        types_or: ["python", "pyi"]
-        args: [--fix]
-        exclude: libs/pydegas/src/pydegas/parse/
-      # Run the formatter.
-      - id: ruff-format
-        types_or: ["python", "pyi"]
-        exclude: libs/pydegas/src/pydegas/parse/
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: check-json
+        exclude: ^libs/degas-ui/tsconfig(\.[a-z]+)?\.json$
+      - id: check-toml
+      - id: check-yaml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.51.1
+    hooks:
+      - id: typos
+        args: [--force-exclude]
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.9.5
+    rev: 0.11.8
     hooks:
       - id: uv-lock
-        files: libs/pydegas/pyproject.toml
-        args: ["--project", "libs/pydegas"]
+        name: uv lock (pydegas)
+        files: ^libs/pydegas/(pyproject\.toml|uv\.lock)$
+        args: [--project, libs/pydegas]
+      - id: uv-lock
+        name: uv lock (degas-api)
+        files: ^libs/(degas-api/(pyproject\.toml|uv\.lock)|pydegas/pyproject\.toml)$
+        args: [--project, libs/degas-api]
+
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.25
+    hooks:
+      - id: validate-pyproject
+        files: ^libs/[^/]+/pyproject\.toml$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.0
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  - repo: https://github.com/AleksaC/hadolint-py
+    rev: v2.15.1
+    hooks:
+      - id: hadolint
+        args: [--failure-threshold, warning]
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.38.2
+    hooks:
+      - id: check-compose-spec
+
+  - repo: local
+    hooks:
+      - id: mypy-pydegas
+        name: mypy (pydegas)
+        language: system
+        entry: uv run --directory libs/pydegas --frozen mypy
+        files: ^libs/pydegas/(src|tests)/.+\.pyi?$|^libs/pydegas/pyproject\.toml$
+        pass_filenames: false
+        require_serial: true
+      - id: mypy-degas-api
+        name: mypy (degas-api)
+        language: system
+        entry: uv run --directory libs/degas-api --frozen mypy
+        files: ^libs/degas-api/(src|scripts|tests)/.+\.pyi?$|^libs/degas-api/pyproject\.toml$|^libs/pydegas/src/.+\.pyi?$
+        pass_filenames: false
+        require_serial: true
+      - id: prettier
+        name: prettier (degas-ui)
+        language: system
+        entry: libs/degas-ui/node_modules/.bin/prettier --write --ignore-unknown
+        files: ^libs/degas-ui/
+        types_or: [ts, tsx, javascript, css, html, json]
+        exclude: ^libs/degas-ui/(package-lock\.json|public/)
+      - id: eslint
+        name: eslint (degas-ui)
+        language: system
+        entry: npm --prefix libs/degas-ui run --silent lint
+        files: ^libs/degas-ui/(src/.+\.(ts|tsx)|eslint\.config\.js|package\.json)$
+        pass_filenames: false
+      - id: tsc
+        name: tsc (degas-ui)
+        language: system
+        entry: npm --prefix libs/degas-ui run --silent typecheck
+        files: ^libs/degas-ui/(src/.+\.(ts|tsx)|tsconfig.*\.json|vite\.config\.ts|package\.json)$
+        pass_filenames: false

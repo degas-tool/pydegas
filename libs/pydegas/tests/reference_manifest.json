@@ -1,0 +1,23 @@
+{
+  "revision": "0b9a367ff95e356c24bb5a76efb9aa9909ff0faa",
+  "files": {
+    "ASGMTLexer.py": "8bb88f96ab4aed5c82125039f14782f021cc46cbe212d20d140b027212aea332",
+    "ASGMTListener.py": "e61aa59baf87fccb328fa48ffa78e7de48b21c0d79271e2f9c6d08d4d1128472",
+    "ASGMTParser.py": "2c118f10072946b58f87323622fb61c45ced5480f87f3460fe730b4db142cf67",
+    "SOGALexer.py": "a14926ecf9f60933aa43aaaa0f24cb221255040b1eebc96a18c2885e3f4f618f",
+    "SOGAListener.py": "c1b5be24202c5447fde41dca7d8b3a217f030a9d63fad45ba96b2f3b0891d682",
+    "SOGAParser.py": "454ca4a8128e2da696d68ee969623c2cde0ff1410428a28e17341350aa7a07c9",
+    "TRUNCLexer.py": "9274268f78e2b294da33c5f4264cf9487d7223c244095fb254002c005fd47baf",
+    "TRUNCListener.py": "910fe452d412827df0103c697effe770d7ab4d550cacbb150f3c587b77168fb4",
+    "TRUNCParser.py": "480a372de28820e69fc62beef1f1f649c36b4abd07e9b81ab11436b501de3953",
+    "libSOGA.py": "30a96689e98759518ac868bd66ed2083cd7f461352536541990a137f74de305d",
+    "libSOGAmerge.py": "5f169b16f8d3b02bc8bb54d7dd947eae41b8199d1d4fe9347f1fde2d10919bd2",
+    "libSOGAshared.py": "451c69a62be1b9cf1ae5bc0080241eb699505431ca41d45e4115c85832ad3c78",
+    "libSOGAtruncate.py": "743d02c5ca2d0e47cd01469e659e3448db91ca3efde224ddcce219b04629cb2a",
+    "libSOGAupdate.py": "f59c68ec5897a957834c21425099841761a8d07f58341a2a8accb9ba3f9b9661",
+    "optimization.py": "5179bda7ade7f117096e1931762698dd11b8e636653a480a6f882326a17d11f8",
+    "producecfg.py": "e987c5e7ac5409f9e032ea98152a88b651efba4dca9a0dbf750dcb3c4ba3a206",
+    "smoothcfg.py": "50e7510e7dfce305caa6ec9fac21e1a2c423466053331c70b20346178c8b547c",
+    "sogaPreprocessor.py": "9db86f2123d988b8e3d04091a01dad6c067482111af2f1838cc54e9247af69cd"
+  }
+}

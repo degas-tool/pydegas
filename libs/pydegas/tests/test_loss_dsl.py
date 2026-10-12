@@ -66,14 +66,54 @@ def test_neg_log_likelihood_dsl_matches_python() -> None:
     assert torch.allclose(dsl.double(), py.double(), rtol=1e-5, atol=1e-6)
 
 
-def test_signal_error_dsl_compiles_and_runs() -> None:
+def test_signal_error_dsl_matches_builtin_defaults() -> None:
     torch = pytest.importorskip("torch")
+    from pydegas.cfg.builder import from_text
     from pydegas.optimize.dsl import compile_loss
-    from pydegas.optimize.losses import LOSS_DSL_SOURCE
+    from pydegas.optimize.losses import LOSS_DSL_SOURCE, LOSS_PARAM_SCHEMA, signal_error
+    from pydegas.semantics.engine import start_soga
 
-    dist = _sample_dist()
-    dsl = compile_loss(LOSS_DSL_SOURCE["signal_error"], target=0.7)(dist)
-    assert torch.isfinite(dsl)
+    defaults = {p["name"]: p["default"] for p in LOSS_PARAM_SCHEMA["signal_error"]}
+    program = "array[50] X; x = 0; for i in range(50) { x = x + gm([1.0],[0.1],[0.2]); X[i] = x; } end for;"
+    dist = start_soga(from_text(program))
+    dsl = compile_loss(LOSS_DSL_SOURCE["signal_error"], target=torch.tensor(defaults["target"]))(dist)
+    builtin = signal_error()(dist)
+    assert f"range(1, {defaults['time_steps']})" in LOSS_DSL_SOURCE["signal_error"]
+    torch.testing.assert_close(dsl, builtin)
+
+
+def test_param_schema_matches_builtin_signatures() -> None:
+    import inspect
+
+    from pydegas.optimize.losses import LOSS_PARAM_SCHEMA, LOSS_REGISTRY
+
+    assert set(LOSS_PARAM_SCHEMA) == set(LOSS_REGISTRY)
+    for name, factory in LOSS_REGISTRY.items():
+        signature = inspect.signature(factory).parameters
+        schema = {p["name"]: p for p in LOSS_PARAM_SCHEMA[name]}
+        assert list(schema) == list(signature), name
+        for param_name, param in signature.items():
+            required = param.default is inspect.Parameter.empty
+            assert schema[param_name]["required"] is required, (name, param_name)
+            if not required:
+                assert schema[param_name]["default"] == param.default, (name, param_name)
+
+
+def test_grammar_header_examples_are_valid_loss_definitions() -> None:
+    from importlib.resources import files
+
+    from pydegas.optimize.dsl import validate_loss
+
+    header = files("pydegas").joinpath("grammars/DeGASLoss.g4").read_text().split("grammar DeGASLoss;")[0]
+    body = header.split("// Examples:")[1]
+    examples = [
+        block
+        for block in "\n".join(line.removeprefix("//") for line in body.splitlines()).split("\n\n")
+        if block.strip()
+    ]
+    assert len(examples) == 3
+    for example in examples:
+        assert validate_loss(example) == [], example
 
 
 @pytest.mark.parametrize("name", ["l2_distance", "neg_log_likelihood"])

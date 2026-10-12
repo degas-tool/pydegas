@@ -6,18 +6,17 @@
 // and returning a scalar expression. The body consists of zero or more
 // sequential assignments followed by a single return expression.
 //
-// Example:
+// Examples:
 //
-//   loss L2_distance(traj_set: traj_set, dist: dist) =
-//       idx = [1,2,3,4,5,6,7,8,9];
-//       sum( (traj_set[:, idx] - dist.mean[idx]) ^ 2 )
+//   loss l2_distance(ts: traj_set, d: dist) =
+//       sum( (ts[:, [1, 2, 3, 4, 5, 6, 7, 8, 9]] - d.mean[[1, 2, 3, 4, 5, 6, 7, 8, 9]]) ^ 2 )
 //
-//   loss signal_error(dist: dist, target: scalar, T: int) =
-//       idx = range(1, T);
-//       sum( (dist.mean[idx] - ones(idx) * target) ^ 2 )
+//   loss signal_error(d: dist, target: scalar) =
+//       sum( (d.mean[range(1, 50)] - ones(range(1, 50)) * target) ^ 2 )
 //
-//   loss neg_log_likelihood(traj_set: traj_set, dist: dist, idx: index_list) =
-//       - sum( log( dist.marg_pdf(traj_set[:, idx], idx) ) )
+//   loss neg_log_likelihood(ts: traj_set, d: dist, idx: index_list) =
+//       sliced = ts[:, idx];
+//       - sum( log( d.marg_pdf(sliced, idx) ) )
 
 grammar DeGASLoss;
 

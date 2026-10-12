@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pydegas.optimize.losses import (
     LOSS_DSL_SOURCE,
+    LOSS_PARAM_SCHEMA,
     LOSS_REGISTRY,
     LossFunction,
     get_loss,
@@ -22,6 +23,7 @@ from pydegas.optimize.runner import (
 
 __all__ = [
     "LOSS_DSL_SOURCE",
+    "LOSS_PARAM_SCHEMA",
     "LOSS_REGISTRY",
     "OPTIMIZER_REGISTRY",
     "LossFunction",

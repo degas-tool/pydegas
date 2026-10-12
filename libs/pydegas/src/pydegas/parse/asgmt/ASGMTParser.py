@@ -1446,11 +1446,13 @@ class ASGMTParser(Parser):
         def unpack(self, params_dict):
             import torch
 
+            from pydegas.parse.values import lookup_parameter
+
             str_list = self.getText()[1:-1].split(",")
             unpacked = torch.zeros(len(str_list))
             for i, elem in enumerate(str_list):
                 if elem[0] == "_":
-                    unpacked[i] = params_dict[elem[1:]]
+                    unpacked[i] = lookup_parameter(params_dict, elem[1:])
                 else:
                     unpacked[i] = float(elem)
             return unpacked
@@ -1580,8 +1582,10 @@ class ASGMTParser(Parser):
                 return visitor.visitChildren(self)
 
         def getValue(self, params_dict):
+            from pydegas.parse.values import lookup_parameter
+
             name = self.getText()[1:]  # strip leading '_'
-            return params_dict[name]
+            return lookup_parameter(params_dict, name)
 
     def par(self):
 

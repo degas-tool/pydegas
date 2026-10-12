@@ -8,11 +8,11 @@ from typing import Any
 
 import torch
 from antlr4 import CommonTokenStream, InputStream
-from antlr4.error.ErrorListener import ErrorListener
 
 from pydegas.exceptions import LossCompileError
 from pydegas.mixtures.distribution import Dist
 from pydegas.optimize.losses import LossFunction
+from pydegas.parse.errors import CollectingErrorListener
 
 
 logger = logging.getLogger(__name__)
@@ -27,15 +27,6 @@ _MATH_OPS: dict[str, Any] = {
     "abs": torch.abs,
     "sqrt": torch.sqrt,
 }
-
-
-class _CollectingErrorListener(ErrorListener):
-    def __init__(self) -> None:
-        super().__init__()
-        self.errors: list[str] = []
-
-    def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e) -> None:
-        self.errors.append(f"line {line}:{column} {msg}")
 
 
 class _LossEvaluator:
@@ -142,7 +133,10 @@ class _LossEvaluator:
         return torch.sum(self.visit(ctx.expr()))
 
     def visitAggMean(self, ctx: Any) -> torch.Tensor:
-        return torch.mean(self.visit(ctx.expr()).float())
+        value = self.visit(ctx.expr())
+        if not (value.is_floating_point() or value.is_complex()):
+            value = value.to(torch.get_default_dtype())
+        return torch.mean(value)
 
     def visitAggMax(self, ctx: Any) -> torch.Tensor:
         return torch.max(self.visit(ctx.expr()))
@@ -197,7 +191,7 @@ class _LossEvaluator:
 
 
 def _parse(source: str) -> tuple[Any, list[str]]:
-    listener = _CollectingErrorListener()
+    listener = CollectingErrorListener()
 
     lexer = _Lexer(InputStream(source))
     lexer.removeErrorListeners()
@@ -234,7 +228,7 @@ def extract_params(source: str) -> list[dict[str, str | None]]:
     for p in loss_defs[0].paramList().param():
         name = p.IDENT().getText()
         type_ann = p.typeAnn().getText() if p.typeAnn() else None
-        if type_ann == "dist" or (type_ann is None and name == "dist"):
+        if type_ann == "dist":
             continue
         result.append({"name": name, "type": type_ann})
     return result
@@ -266,10 +260,7 @@ def compile_loss(source: str, **bindings: Any) -> LossFunction:
         (p.IDENT().getText(), p.typeAnn().getText() if p.typeAnn() else None) for p in loss_def.paramList().param()
     ]
 
-    dist_param = next(
-        (n for n, t in params if t == "dist" or (t is None and n == "dist")),
-        None,
-    )
+    dist_param = next((n for n, t in params if t == "dist"), None)
     if dist_param is None:
         raise LossCompileError(
             f"Loss {name!r} has no parameter annotated as 'dist'. "

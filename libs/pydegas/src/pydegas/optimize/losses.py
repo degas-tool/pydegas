@@ -8,6 +8,7 @@ from typing import Any
 
 import torch
 
+from pydegas.exceptions import ConfigurationError, UnknownLossError
 from pydegas.mixtures.distribution import Dist
 
 
@@ -63,7 +64,7 @@ def signal_error(target: float = 3.14, time_steps: int = 50) -> LossFunction:
     def _loss(dist: Dist) -> torch.Tensor:
         n = dist.gm.mean().shape[0]
         if time_steps > n:
-            raise ValueError(
+            raise ConfigurationError(
                 f"signal_error: time_steps={time_steps} exceeds the number of program "
                 f"variables in the distribution ({n}). Set time_steps <= {n}."
             )
@@ -95,15 +96,17 @@ LOSS_DSL_SOURCE: dict[str, str] = {
     ),
     "signal_error": (
         "loss signal_error(distribution: dist, target: scalar) =\n"
-        "    sum( (distribution.mean[range(0, 5)] - ones(range(0, 5)) * target) ^ 2 )\n"
+        "    sum( (distribution.mean[range(1, 50)] - ones(range(1, 50)) * target) ^ 2 )\n"
     ),
 }
 
 
 def get_loss(name: str, **kwargs: Any) -> LossFunction:
+    """Build the registered loss *name* with *kwargs*.
+
+    Raises ``UnknownLossError`` (a ``ValueError``) for a name not in ``LOSS_REGISTRY``.
+    """
     if name not in LOSS_REGISTRY:
         logger.error("unknown loss name=%r; available=%s", name, sorted(LOSS_REGISTRY))
-        raise ValueError(
-            f"Unknown loss name {name!r}. Available: {sorted(LOSS_REGISTRY)}"
-        )
+        raise UnknownLossError(f"Unknown loss name {name!r}. Available: {sorted(LOSS_REGISTRY)}")
     return LOSS_REGISTRY[name](**kwargs)

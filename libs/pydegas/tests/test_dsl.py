@@ -264,3 +264,39 @@ def test_compile_loss_returned_function_name_matches_definition(simple_dist) -> 
     source = "loss my_custom_loss(d: dist) = sum( d.mean() )"
     fn = compile_loss(source)
     assert fn.__name__ == "my_custom_loss"
+
+
+def test_mean_agg_keeps_the_input_dtype() -> None:
+    torch = pytest.importorskip("torch")
+    from pydegas.mixtures.distribution import Dist
+    from pydegas.mixtures.gaussian_mix import GaussianMix
+    from pydegas.optimize.dsl import compile_loss
+
+    dist = Dist(
+        ["x", "y"],
+        GaussianMix(
+            torch.tensor([[1.0]], dtype=torch.float64),
+            torch.tensor([[0.1, 0.2]], dtype=torch.float64),
+            torch.eye(2, dtype=torch.float64).unsqueeze(0),
+        ),
+    )
+    result = compile_loss("loss m(d: dist) = mean_agg( d.mean() )")(dist)
+    assert result.dtype == torch.float64
+    assert result.item() == pytest.approx(0.15, abs=1e-15)
+
+
+def test_mean_agg_converts_integer_input_to_the_default_dtype(simple_dist) -> None:
+    torch = pytest.importorskip("torch")
+    from pydegas.optimize.dsl import compile_loss
+
+    result = compile_loss("loss m(d: dist, v: index_list) = mean_agg( v )", v=torch.tensor([1, 2]))(simple_dist)
+    assert result.dtype == torch.get_default_dtype()
+    assert result.item() == pytest.approx(1.5)
+
+
+def test_dist_is_a_keyword_so_it_cannot_be_an_unannotated_parameter_name() -> None:
+    from pydegas.optimize.dsl import extract_params, validate_loss
+
+    source = "loss f(dist) = 1.0"
+    assert validate_loss(source) != []
+    assert extract_params(source) == []

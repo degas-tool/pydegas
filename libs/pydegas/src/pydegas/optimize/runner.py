@@ -11,6 +11,7 @@ from typing import Any, Literal
 import torch
 
 from pydegas.cfg.graph import ControlFlowGraph
+from pydegas.exceptions import UnknownOptimizerError, UnsupportedOptimizerError
 from pydegas.mixtures.distribution import Dist
 from pydegas.optimize.losses import LossFunction
 from pydegas.optimize.params import initialize_params, snapshot_params
@@ -30,7 +31,7 @@ OPTIMIZER_REGISTRY: dict[str, type[torch.optim.Optimizer]] = {
 }
 
 
-type OptimizerSpec = torch.optim.Optimizer | type[torch.optim.Optimizer] | str
+type OptimizerSpec = type[torch.optim.Optimizer] | str
 
 
 def resolve_optimizer(
@@ -38,21 +39,33 @@ def resolve_optimizer(
     parameters: list[torch.Tensor],
     **kwargs: Any,
 ) -> torch.optim.Optimizer:
-    if isinstance(spec, torch.optim.Optimizer):
-        if kwargs:
-            logger.warning("optimizer instance supplied; ignoring kwargs=%s", kwargs)
-        return spec
+    """Build an optimizer over *parameters* from a registered name or an optimizer class.
 
+    Raises ``UnknownOptimizerError`` (a ``ValueError``) for a name not in
+    ``OPTIMIZER_REGISTRY`` and ``UnsupportedOptimizerError`` (a ``TypeError``)
+    for anything else, including optimizer instances: an instance is bound to
+    the tensors it was created with, so it would never update *parameters*.
+    """
     if isinstance(spec, str):
         if spec not in OPTIMIZER_REGISTRY:
             logger.error("unknown optimizer name=%r; available=%s", spec, sorted(OPTIMIZER_REGISTRY))
-            raise ValueError(f"Unknown optimizer name {spec!r}. Available: {sorted(OPTIMIZER_REGISTRY)}")
+            raise UnknownOptimizerError(f"Unknown optimizer name {spec!r}. Available: {sorted(OPTIMIZER_REGISTRY)}")
         cls: type[torch.optim.Optimizer] = OPTIMIZER_REGISTRY[spec]
     elif isinstance(spec, type) and issubclass(spec, torch.optim.Optimizer):
         cls = spec
+    elif isinstance(spec, torch.optim.Optimizer):
+        logger.error("optimizer instance supplied: %s", type(spec).__name__)
+        raise UnsupportedOptimizerError(
+            f"Optimizer instances are not supported: {type(spec).__name__} was created with its own tensors "
+            "and would never update the run's parameters. Pass the class or a registered name "
+            f"({', '.join(OPTIMIZER_REGISTRY)}) and set hyperparameters with optimizer_kwargs."
+        )
     else:
         logger.error("unsupported optimizer spec=%r (type=%s)", spec, type(spec).__name__)
-        raise TypeError(f"Unsupported optimizer spec: {spec!r}")
+        raise UnsupportedOptimizerError(
+            f"Unsupported optimizer spec {spec!r}: expected a registered name "
+            f"({', '.join(OPTIMIZER_REGISTRY)}) or a torch.optim.Optimizer subclass."
+        )
 
     return cls(parameters, **kwargs)
 

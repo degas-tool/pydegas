@@ -2593,8 +2593,10 @@ class TRUNCParser(Parser):
                 return visitor.visitChildren(self)
 
         def getValue(self, params_dict):
+            from pydegas.parse.values import lookup_parameter
+
             name = self.getText()[1:]  # strip leading '_'
-            return params_dict[name]
+            return lookup_parameter(params_dict, name)
 
     def par(self):
 

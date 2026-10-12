@@ -67,6 +67,42 @@ def test_optimizer_class_matches_registered_name():
     assert [r.params["mu"] for r in by_class] == pytest.approx([r.params["mu"] for r in by_name])
 
 
+def test_optimizer_instance_is_rejected_because_it_would_not_update_the_run_parameters():
+    from pydegas.exceptions import PyDeGASError, UnsupportedOptimizerError
+
+    instance = torch.optim.SGD([torch.tensor(1.0, requires_grad=True)], lr=0.1)
+    with pytest.raises(UnsupportedOptimizerError, match="Optimizer instances are not supported") as excinfo:
+        make_run(optimizer=instance, optimizer_kwargs=None)
+    assert isinstance(excinfo.value, TypeError)
+    assert isinstance(excinfo.value, PyDeGASError)
+
+
+def test_optimizer_assigned_after_construction_updates_the_run_parameters():
+    run = make_run()
+    run.optimizer = torch.optim.SGD(run.params.values(), lr=0.5)
+    first = run.step(0)
+    assert first.params["mu"] == pytest.approx(0.0)
+
+
+def test_unknown_optimizer_name_raises_unknown_optimizer_error():
+    from pydegas.exceptions import PyDeGASError, UnknownOptimizerError
+
+    with pytest.raises(UnknownOptimizerError, match="Available: ") as excinfo:
+        make_run(optimizer="NoSuchOptimizer")
+    assert isinstance(excinfo.value, ValueError)
+    assert isinstance(excinfo.value, PyDeGASError)
+
+
+def test_unsupported_optimizer_spec_lists_the_registered_names():
+    from pydegas.exceptions import UnsupportedOptimizerError
+    from pydegas.optimize import OPTIMIZER_REGISTRY
+
+    with pytest.raises(UnsupportedOptimizerError) as excinfo:
+        make_run(optimizer=42)
+    assert isinstance(excinfo.value, TypeError)
+    assert all(name in str(excinfo.value) for name in OPTIMIZER_REGISTRY)
+
+
 def test_run_does_not_print_or_write_distribution_statistics(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
     make_run().run(3)

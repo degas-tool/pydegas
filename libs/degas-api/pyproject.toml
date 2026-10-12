@@ -1,0 +1,27 @@
+[project]
+name = "degas-api"
+version = "0.0.0"
+description = "API for the DeGAS"
+readme = "README.md"
+authors = []
+requires-python = ">=3.12"
+dependencies = [
+    "apscheduler>=3.10",
+    "fastapi[standard]>=0.136.1",
+    "loguru>=0.7.3",
+    "pydegas",
+    "redis>=7.4.0",
+    "sqlmodel>=0.0.22",
+    "websockets>=16.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.8,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = ["degas_api"]
+namespace = true
+
+[tool.uv.sources]
+pydegas = { path = "../pydegas" }

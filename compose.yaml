@@ -25,6 +25,15 @@ services:
       # Bind to loopback only - Caddy on the host is the public entry point.
       - "127.0.0.1:3000:80"
 
+  migrate:
+    build:
+      context: .
+      dockerfile: libs/degas-api/Dockerfile
+    command: ["migrate"]
+    volumes:
+      - sqlite_data:/data
+    network_mode: none
+
   api:
     build:
       context: .
@@ -33,6 +42,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       DEGAS_API_OPTIMIZATION_RATE_LIMITER__HOST: db
       DEGAS_API_ALLOWED_HOSTS: '["degas.dev","www.degas.dev","localhost"]'
@@ -44,13 +55,7 @@ services:
     ports:
       # Bind to loopback only - Caddy on the host is the public entry point.
       - "127.0.0.1:8000:8000"
-    command:
-      - "--host"
-      - "0.0.0.0"
-      - "--port"
-      - "8000"
-      - "--workers"
-      - "4"
+    command: ["serve", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
 
 
 networks:

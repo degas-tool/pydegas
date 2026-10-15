@@ -1,0 +1,121 @@
+name: Release pydegas
+
+on:
+  push:
+    tags: ["pydegas-v*"]
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  UV_VERSION: "0.11.8"
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: libs/pydegas
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: false
+
+      - name: Check that the tag matches the version
+        if: github.ref_type == 'tag'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(uv version --short)"
+          if [ "$TAG" != "pydegas-v$version" ]; then
+            echo "::error::tag $TAG does not match the pyproject.toml version $version"
+            exit 1
+          fi
+
+      - name: Build the sdist and the wheel
+        run: uv build --no-sources --out-dir dist
+
+      - name: Run an example with the built wheel
+        run: |
+          uv venv --python 3.12 "$RUNNER_TEMP/smoke"
+          uv pip install --python "$RUNNER_TEMP/smoke" --torch-backend cpu dist/*.whl
+          "$RUNNER_TEMP/smoke/bin/python" -I -c '
+          import torch
+          from pydegas.cfg import smooth
+          from pydegas.cfg.builder import from_text
+          from pydegas.optimize import OptimizationRun, get_loss
+          from pydegas.parse.preprocessor import compile_to_soga_text
+
+          cfg = from_text(compile_to_soga_text("x = gauss(0., 1.);\ny = _a*x + _b + gauss(0., 0.5);", seed=0))
+          smooth(cfg)
+          xs = torch.randn(50)
+          data = torch.stack([xs, 2.0 * xs + 1.0], dim=1)
+          loss_fn = get_loss("neg_log_likelihood", trajectories=data, indices=[0, 1])
+          print(OptimizationRun(cfg, {"a": 0.0, "b": 0.0}, loss_fn).run(3)[-1].params)
+          '
+
+      - name: Upload the distributions
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist
+          path: libs/pydegas/dist/
+          if-no-files-found: error
+
+  testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/pydegas
+    permissions:
+      id-token: write
+    steps:
+      - name: Download the distributions
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  pypi:
+    name: Publish to PyPI
+    needs: build
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pydegas
+    permissions:
+      id-token: write
+    steps:
+      - name: Download the distributions
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2

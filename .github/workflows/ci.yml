@@ -133,11 +133,18 @@ jobs:
       run:
         working-directory: libs/pydegas
     steps:
-      - name: Check out the repository and the DeGAS reference
+      - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          submodules: true
+
+      - name: Download the DeGAS reference at the submodule commit
+        working-directory: .
+        run: |
+          commit="$(git ls-tree --object-only HEAD reference/DeGAS)"
+          mkdir -p reference/DeGAS
+          curl -fsSL "https://github.com/frarandone/DeGAS/archive/${commit}.tar.gz" | tar -xz --strip-components=1 -C reference/DeGAS
+          test -f reference/DeGAS/src/libSOGA.py
 
       - name: Install uv and Python ${{ matrix.python }}
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
@@ -155,9 +162,6 @@ jobs:
       - name: Type-check
         if: matrix.python == '3.12'
         run: uv run mypy
-
-      - name: Require the reference submodule
-        run: test -f ../../reference/DeGAS/src/libSOGA.py
 
       - name: Test
         run: uv run pytest

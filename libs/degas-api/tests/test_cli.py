@@ -1,4 +1,5 @@
 import os
+import re
 import sqlite3
 import urllib.error
 from contextlib import closing
@@ -130,7 +131,7 @@ def test_serve_rejects_invalid_options(uvicorn_calls: list[dict[str, Any]], args
     result = runner.invoke(cli.app, ["serve", *args])
 
     assert result.exit_code == 2
-    assert message in result.output
+    assert message in re.sub(r"\x1b\[[0-9;]*m", "", result.output)
     assert uvicorn_calls == []
 
 

@@ -19,17 +19,17 @@ a broken nested submodule inside DeGAS.
 
 Each project has its own environment in its own directory:
 
-| Directory | Command | Result |
-|---|---|---|
-| `libs/pydegas` | `uv sync` | `.venv` with pydegas, pytest, ruff, mypy |
-| `libs/degas-api` | `uv sync` | `.venv` with degas-api, pydegas (editable), pytest, ruff, mypy |
-| `libs/degas-ui` | `npm ci` | `node_modules` |
+| Directory | Command |
+|---|---|
+| `libs/pydegas` | `uv sync` |
+| `libs/degas-api` | `uv sync` |
+| `libs/degas-ui` | `npm ci` |
 
-- Run Python tools with `uv run <command>` from the project directory.
-- Point your editor at `libs/<project>/.venv/bin/python`.
-- degas-api installs pydegas from `libs/pydegas` in editable mode, so code
-  changes apply directly. After changing pydegas's dependencies, run `uv lock`
-  in `libs/degas-api` as well.
+- degas-api uses the pydegas release from PyPI. To try unreleased pydegas
+  changes in the API, run
+  `uv pip install --no-deps --editable ../pydegas` in `libs/degas-api`, then
+  `uv run --no-sync <command>`. After a pydegas release, run
+  `uv lock --upgrade-package pydegas` in `libs/degas-api`.
 - After changing dependencies, run `uv lock` and commit `uv.lock`.
 
 ## pydegas

@@ -167,7 +167,7 @@ requires-dist = [
     { name = "loguru", specifier = ">=0.7.3,<0.8" },
     { name = "pydantic", specifier = ">=2.11,<3" },
     { name = "pydantic-settings", specifier = ">=2.10,<3" },
-    { name = "pydegas", editable = "../pydegas" },
+    { name = "pydegas", specifier = ">=0.0.1" },
     { name = "python-dotenv", specifier = ">=1.0,<2" },
     { name = "redis", specifier = ">=7.4.0,<8" },
     { name = "sqlalchemy", specifier = ">=2.0,<3" },
@@ -904,7 +904,7 @@ wheels = [
 [[package]]
 name = "pydegas"
 version = "0.0.1"
-source = { editable = "../pydegas" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "antlr4-python3-runtime" },
     { name = "botorch" },
@@ -913,21 +913,9 @@ dependencies = [
     { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "python_full_version < '3.15' and sys_platform == 'darwin'" },
     { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "python_full_version >= '3.15' or sys_platform != 'darwin'" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "antlr4-python3-runtime", specifier = "==4.10" },
-    { name = "botorch", specifier = ">=0.9.1" },
-    { name = "numpy", specifier = ">=1.26" },
-    { name = "scikit-learn", specifier = ">=1.3.1" },
-    { name = "torch", specifier = ">=2.2", index = "https://download.pytorch.org/whl/cpu" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = ">=2.4" },
-    { name = "pytest", specifier = ">=8.4" },
-    { name = "ruff", specifier = "==0.17.0" },
+sdist = { url = "https://files.pythonhosted.org/packages/43/03/1c8bcc641b653990c8d6f0fe04f04c2dd783af92e208f33ba4e7220cd2ae/pydegas-0.0.1.tar.gz", hash = "sha256:1c813571265208170ac3e8729d01d02661791777df6f779d565fc62e93d44005", size = 157581, upload-time = "2026-10-15T18:22:30.476Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/79/f9/58541d909584b3206d480eeac94000970ee06a251e43dc95b44605f449d8/pydegas-0.0.1-py3-none-any.whl", hash = "sha256:c5760de791d2ade0672ad8f2e607714264488ae125e75f33e44d4921ffdb8786", size = 94764, upload-time = "2026-10-15T18:22:29.115Z" },
 ]
 
 [[package]]

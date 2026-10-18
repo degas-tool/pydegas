@@ -49,7 +49,7 @@ repos:
         args: [--project, libs/pydegas]
       - id: uv-lock
         name: uv lock (degas-api)
-        files: ^libs/(degas-api/(pyproject\.toml|uv\.lock)|pydegas/pyproject\.toml)$
+        files: ^libs/degas-api/(pyproject\.toml|uv\.lock)$
         args: [--project, libs/degas-api]
 
   - repo: https://github.com/abravalheri/validate-pyproject
@@ -104,7 +104,7 @@ repos:
         name: mypy (degas-api)
         language: system
         entry: uv run --directory libs/degas-api --frozen mypy
-        files: ^libs/degas-api/(src|scripts|tests)/.+\.pyi?$|^libs/degas-api/pyproject\.toml$|^libs/pydegas/src/.+\.pyi?$
+        files: ^libs/degas-api/(src|scripts|tests)/.+\.pyi?$|^libs/degas-api/pyproject\.toml$
         pass_filenames: false
         require_serial: true
       - id: prettier

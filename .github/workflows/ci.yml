@@ -59,10 +59,9 @@ jobs:
               - "!libs/pydegas/docs/**"
             api:
               - libs/degas-api/**
-              - libs/pydegas/**
               - .github/workflows/ci.yml
               - "!**/*.md"
-              - "!libs/*/docs/**"
+              - "!libs/degas-api/docs/**"
             ui:
               - libs/degas-ui/**
               - .github/workflows/ci.yml
@@ -72,7 +71,6 @@ jobs:
               - .dockerignore
               - compose*.yaml
               - nginx.local.conf
-              - libs/pydegas/pyproject.toml
               - libs/degas-api/Dockerfile
               - libs/degas-api/pyproject.toml
               - libs/degas-api/uv.lock

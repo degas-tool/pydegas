@@ -14,10 +14,8 @@ WORKDIR /build/degas-api
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=libs/degas-api/pyproject.toml,target=/build/degas-api/pyproject.toml \
     --mount=type=bind,source=libs/degas-api/uv.lock,target=/build/degas-api/uv.lock \
-    --mount=type=bind,source=libs/pydegas/pyproject.toml,target=/build/pydegas/pyproject.toml \
-    uv sync --frozen --no-dev --no-editable --no-install-project --no-install-package pydegas
+    uv sync --frozen --no-dev --no-editable --no-install-project
 
-COPY libs/pydegas /build/pydegas
 COPY libs/degas-api /build/degas-api
 
 RUN --mount=type=cache,target=/root/.cache/uv \

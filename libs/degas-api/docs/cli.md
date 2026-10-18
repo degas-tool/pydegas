@@ -1,7 +1,7 @@
 # Command line
 
-`uv sync` installs the `degas-api` command; run it with `uv run degas-api` in
-`libs/degas-api`. In the Docker image it is the entrypoint.
+Run it with `uv run degas-api` in `libs/degas-api`. In the Docker image it is
+the entrypoint.
 
 | Command | Does |
 |---|---|

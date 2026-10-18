@@ -12,10 +12,8 @@ uv run degas-api serve
 
 `degas-api migrate` creates the SQLite file or upgrades it to the latest
 schema; `serve` refuses to start until it is up to date. See
-[Command line](cli.md) for the options. `uv sync` installs pydegas from `../pydegas` in editable mode, so changes to
-it apply without reinstalling, and the development tools (pytest, ruff, mypy);
-`uv run pytest` runs the tests. `--workers N` starts N processes; they share
-the run limits through Redis. The API documentation is at
+[Command line](cli.md) for the options. `--workers N` starts N processes;
+they share the run limits through Redis. The API documentation is at
 `http://localhost:8000/docs`.
 
 ## Redis

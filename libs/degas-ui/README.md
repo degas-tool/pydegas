@@ -1,8 +1,9 @@
 # degas-ui
 
-React web interface for [degas-api](../degas-api). It has editors for programs
-and loss definitions, runs optimizations over the API's WebSocket with live
-loss and parameter plots, and keeps a history of saved sessions.
+React web interface for [degas-api](../degas-api/docs/index.md). It has
+editors for programs and loss definitions, runs optimizations over the API's
+WebSocket with live loss and parameter plots, and keeps a history of saved
+sessions.
 
 ```bash
 npm install

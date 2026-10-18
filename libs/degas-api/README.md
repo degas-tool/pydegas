@@ -1,9 +1,9 @@
 # degas-api
 
-FastAPI service built on [pydegas](../pydegas). It validates loss definitions,
-streams optimization runs step by step over a WebSocket, and stores runs as
-shareable sessions. Redis holds the concurrency and rate limits; sessions are
-stored in SQLite.
+FastAPI service built on [pydegas](../pydegas/docs/index.md). It validates
+loss definitions, streams optimization runs step by step over a WebSocket, and
+stores runs as shareable sessions. Redis holds the concurrency and rate limits;
+sessions are stored in SQLite.
 
 ```bash
 uv sync

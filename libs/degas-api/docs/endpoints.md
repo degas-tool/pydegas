@@ -48,7 +48,7 @@ One connection runs one optimization:
 | `smooth_eps` | number or null | null | smoothing width; null uses the library default `1e-3` |
 | `loss_function` | string or null | null | a name from `/loss-functions` |
 | `loss_kwargs` | object | `{}` | arguments of that loss |
-| `loss_source` | string or null, at most 20 000 characters | null | a [loss DSL](../../pydegas/docs/losses.md#loss-dsl) definition; if non-empty, `loss_function` is ignored |
+| `loss_source` | string or null, at most 20 000 characters | null | a [loss DSL](../../pydegas/docs/loss-dsl.md) definition; if non-empty, `loss_function` is ignored |
 | `loss_bindings` | object | `{}` | values for the DSL parameters other than the `dist` one |
 | `optimizer` | string | required | a name from `/optimizers` |
 | `optimizer_kwargs` | object | `{}` | passed to the torch optimizer; `{}` means `{"lr": 0.05}`, except for `LBFGS`: there `max_iter` defaults to 20 and is capped at 20, and without `lr` torch's default `lr` of 1 applies |

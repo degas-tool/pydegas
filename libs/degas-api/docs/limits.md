@@ -99,6 +99,6 @@ out of range, fails at the first step with `compute_error`.
 - The API has no authentication. `DEGAS_API_ALLOWED_HOSTS` checks the `Host`
   header only; the WebSocket's `Origin` is not checked.
 - Remote users cannot run Python: losses are written in the
-  [loss DSL](../../pydegas/docs/losses.md#loss-dsl) and optimizers are chosen
+  [loss DSL](../../pydegas/docs/loss-dsl.md) and optimizers are chosen
   by name.
 - Runs are not isolated in CPU or memory.

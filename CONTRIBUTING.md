@@ -2,8 +2,8 @@
 
 ## Setup
 
-Requires uv, Node.js `^22.13 || >=24` with npm (`.nvmrc`: 24), and for the
-local stack Docker and just.
+Requires uv, Node.js `^22.13 || >=24` with npm, and for the local stack Docker
+and just.
 
 ```bash
 git clone https://github.com/degas-tool/pydegas.git
@@ -30,7 +30,7 @@ Each project has its own environment in its own directory:
   `uv pip install --no-deps --editable ../pydegas` in `libs/degas-api`, then
   `uv run --no-sync <command>`. After a pydegas release, run
   `uv lock --upgrade-package pydegas` in `libs/degas-api`.
-- After changing dependencies, run `uv lock` and commit `uv.lock`.
+- Commit `uv.lock` with dependency changes.
 
 ## pydegas
 
@@ -61,16 +61,8 @@ uv run ruff format
 uv run mypy
 ```
 
-The service needs Redis on `localhost:6379`. Without Redis, set
-`DEGAS_API_OPTIMIZATION_RATE_LIMITER__ENABLED=false`.
-
-After changing a model in `src/degas_api/models/`, add a migration with
-`uv run alembic revision --autogenerate -m "describe the change"`, review it in
-`src/degas_api/migrations/versions/` and run `uv run degas-api migrate`.
-`tests/test_migrations.py` fails when the models and the migrations differ.
-
-`uv run python scripts/generate_trajectories.py` regenerates the CSVs in
-`data/`.
+Redis and trajectory data: [Running the service](libs/degas-api/docs/running.md).
+Model changes: [Schema changes](libs/degas-api/docs/cli.md#schema-changes).
 
 ## degas-ui
 
@@ -91,9 +83,8 @@ uvx pre-commit install
 uvx pre-commit run --all-files
 ```
 
-The hooks run ruff, mypy, Prettier, ESLint and tsc per project, check the
-lockfiles, and lint Dockerfiles and the compose file. The mypy, ESLint and tsc
-hooks use the project environments, so create them first.
+The hooks are defined in `.pre-commit-config.yaml`. The Prettier, ESLint and
+tsc hooks run from `libs/degas-ui/node_modules`, so run `npm ci` there first.
 
 ## Commit messages
 

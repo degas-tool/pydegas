@@ -1,8 +1,5 @@
 # degas-api documentation
 
-degas-api exposes pydegas over HTTP and a WebSocket. It calls the library in
-process, admits a bounded number of concurrent runs, and stores saved runs.
-
 | Page | Contents |
 |---|---|
 | [Command line](cli.md) | `degas-api migrate`, `serve`, `health`, `version`, schema changes |

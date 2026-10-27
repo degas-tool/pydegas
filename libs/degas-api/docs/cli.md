@@ -14,13 +14,10 @@ the entrypoint.
 
 ## migrate
 
-| Option | Default | Meaning |
-|---|---|---|
-| `--revision` | `head` | revision to upgrade to |
-
-Works on `DEGAS_API_DB_PATH`. A database created before migrations existed is
-stamped with the baseline revision first, so its sessions are kept. Running it
-again on an up-to-date database changes nothing.
+`--revision` (default `head`) is the revision to upgrade to. It works on
+`DEGAS_API_DB_PATH`. A database created before migrations existed is stamped
+with the baseline revision first, so its sessions are kept. Running it again on
+an up-to-date database changes nothing.
 
 ## serve
 

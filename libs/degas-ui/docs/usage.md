@@ -7,15 +7,6 @@ The dividers between panels can be dragged. The header has the history
 and the light/dark switch; until the switch is used, the theme follows the
 system setting.
 
-- [Program and parameters](#program-and-parameters)
-- [Loss](#loss)
-- [Loss arguments](#loss-arguments)
-- [Run settings](#run-settings)
-- [Examples](#examples)
-- [Running and results](#running-and-results)
-- [Export](#export)
-- [History and sharing](#history-and-sharing)
-
 ## Program and parameters
 
 The program is written in the high-level [program language](../../pydegas/docs/language.md)
@@ -99,8 +90,7 @@ field: [request](../../degas-api/docs/endpoints.md#request).
 | PID | `_s0` 46, `_s1` −23, `_s2` 0 | `signal_error` | `target` 3.14, `time_steps` 51 | 0.2 | 500 |
 | BouncingBall | `_R` −1, `_C` 450 | `l2_distance` | upload `bouncing_ball_trajectories.csv` | 0.8 | 100 |
 
-All use Adam and `kmeans` pruning, and each program prunes to 10 components
-with `prune(10)` in its loop. Selecting an example sets the program,
+All use Adam and `kmeans` pruning. Selecting an example sets the program,
 optimizer, lr, pruning, the built-in loss (leaving custom mode), loss
 arguments, initial parameters and steps; tol, patience and smooth_eps keep
 their current values. Editing the program switches the selector to Custom.
@@ -133,8 +123,7 @@ of steps and the final parameter values:
 
 A failure message is prefixed `Rate limited:`, `Server busy:` (no free run
 slot) or `Optimization failed:` (error during a step); setup errors are shown
-as the API sends them. The message "Could not connect to the server." means
-the connection could not be opened. If no step arrives for 15 s, a warning
+as the API sends them. If no step arrives for 15 s, a warning
 suggests checking the loss arguments and learning rate or stopping the run.
 
 ## Export

@@ -1,12 +1,5 @@
 # Endpoints
 
-- [Overview](#overview)
-- [Optimization run (WebSocket)](#optimization-run-websocket)
-- [Loss validation](#loss-validation)
-- [Metadata](#metadata)
-- [Sessions](#sessions)
-- [Response headers](#response-headers)
-
 ## Overview
 
 | Method | Path | Purpose |
@@ -34,8 +27,9 @@ to each request, see [Limits and caveats](limits.md).
 One connection runs one optimization:
 
 1. The client sends the request as the first message (JSON text).
-2. The server sends `start`, one `step` per optimization step, and `end`;
-   an `error` takes the place of `start` or of `end`.
+2. The server sends `start`, one `step` per optimization step, and `end`. A
+   `compute_error` takes the place of `end`; every other `error` takes the
+   place of `start`.
 3. The server closes the connection.
 
 ### Request
@@ -54,26 +48,25 @@ One connection runs one optimization:
 | `optimizer_kwargs` | object | `{}` | passed to the torch optimizer; `{}` means `{"lr": 0.05}`, except for `LBFGS`: there `max_iter` defaults to 20 and is capped at 20, and without `lr` torch's default `lr` of 1 applies |
 | `initial_params` | object of numbers | required | start values, named without the leading underscore (`_tOff` is `tOff`); must name every parameter of the program; an empty object is a `setup_error`, a missing parameter a `compute_error` at the first step |
 | `n_steps` | integer | 100 | at least 1 and at most `MAX_STEPS` (500) |
-| `Kmax` | integer or null | 20 | at least 1 and below `MAX_KMAX` (100); null disables pruning at merges |
+| `Kmax` | integer or null | 20 | at least 1 and below `MAX_KMAX` (100); null disables pruning after `end if` |
 | `pruning` | `"classic"`, `"ranking"` or `"kmeans"` | `"classic"` | pruning strategy |
 | `tolerance` | number ≥ 0 or null | `1e-8` | null disables the convergence stop |
 | `patience` | integer ≥ 1 | 30 | number of loss changes that must stay below `tolerance` |
 | `return_dist_summary` | boolean | true | include `dist` in `step` frames |
 
 `loss_function` or a non-empty `loss_source` must be set. Unknown fields are
-ignored. `MAX_STEPS`, `MAX_KMAX` and `MAX_RUN_SECONDS` are variables with
-the prefix `DEGAS_API_OPTIMIZATION_LIMITS__`, see
-[Configuration](configuration.md#limits); the numbers in parentheses are their
-defaults. The character limits and the `LBFGS` cap are fixed.
+ignored. Upper-case names are configurable [limits](limits.md).
 
 Trajectory arguments (`loss_kwargs.trajectories` and bindings annotated
-`traj_set`) are arrays of rows, one row per observation. Custom-loss bindings
-are converted by their annotation: `traj_set` and `scalar` to float64
-tensors, `index_list` to a list of integers, `int` to an integer; unannotated
-values are passed as they are. Built-in loss arguments are converted the same
-way by their `type`: `float[][]` as `traj_set`, `int[]` as `index_list`,
-`float` as `scalar`. A binding that cannot be converted, or a
-trajectory array whose items are not rows, is a `setup_error`. See
+`traj_set`) are arrays of equal-length rows, one row per observation. Values
+are converted by their annotation, or for built-in losses by their `type`:
+`traj_set` or `float[][]` and `scalar` or `float` to float64 tensors,
+`index_list` or `int[]` to integers (`1.0` is accepted, `1.5` and `true` are
+not), `int` to an integer; unannotated bindings are passed as they are. A value
+that cannot be converted, a missing argument or an unknown built-in loss
+argument is a `setup_error`; unknown `loss_bindings` are ignored. A value of
+the right type that does not fit the program, such as an index out of range,
+is a `compute_error` at the first step. See
 [Losses](../../pydegas/docs/losses.md) for what the built-in losses compute.
 
 Example: three Adam steps, fitting `_tOff` to one observed trajectory.
@@ -133,9 +126,6 @@ With the default `MAX_STEPS`:
 {"type":"error","kind":"setup_error","detail":"n_steps=501 exceeds the maximum of 500."}
 {"type":"error","kind":"compute_error","detail":"Step 0 produced a non-finite loss, parameter or mean (NaN or infinity); the run was stopped."}
 ```
-
-`compute_error` arrives only after `start`, in place of `end`. All other
-errors arrive in place of `start`.
 
 ### Stopping
 
@@ -205,8 +195,6 @@ steps with `PATCH`.
 - A session expires `DEGAS_API_SESSION_TTL_DAYS` (default 1) days after it
   was created or last read; every `GET` of the session resets that time.
   `PATCH` does not.
-- Sessions are readable and listable by anyone. See
-  [Limits and caveats](limits.md#sessions).
 
 ## Response headers
 

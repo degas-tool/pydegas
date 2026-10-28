@@ -5,7 +5,7 @@
 # pydegas
 
 Gradient-based optimization of probabilistic programs without sampling, based
-on DeGAS ([arXiv:2601.15167](https://arxiv.org/abs/2601.15167)).
+on DeGAS ([https://doi.org/10.1007/978-3-032-22752-2_29](https://doi.org/10.1007/978-3-032-22752-2_29)).
 
 | Project | What it is |
 |---|---|
@@ -28,13 +28,12 @@ reference code at [frarandone/DeGAS](https://github.com/frarandone/DeGAS).
 ## Citation
 
 ```bibtex
-@misc{randone2026degasgradientbasedoptimizationprobabilistic,
-      title={DeGAS: Gradient-Based Optimization of Probabilistic Programs without Sampling},
-      author={Francesca Randone and Romina Doz and Mirco Tribastone and Luca Bortolussi},
-      year={2026},
-      eprint={2601.15167},
-      archivePrefix={arXiv},
-      primaryClass={cs.PL},
-      url={https://arxiv.org/abs/2601.15167},
+@inproceedings{randone2026degas,
+  title={DeGAS: Gradient-Based Optimization of Probabilistic Programs without Sampling},
+  author={Randone, Francesca and Doz, Romina and Tribastone, Mirco and Bortolussi, Luca},
+  booktitle={International Conference on Tools and Algorithms for the Construction and Analysis of Systems},
+  pages={566--585},
+  year={2026},
+  organization={Springer}
 }
 ```

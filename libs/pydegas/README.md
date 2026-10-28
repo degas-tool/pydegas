@@ -1,8 +1,8 @@
 # pydegas
 
 Fits the parameters of probabilistic programs with gradient descent, without
-sampling. pydegas runs a program on Gaussian mixtures (DeGAS,
-[arXiv:2601.15167](https://arxiv.org/abs/2601.15167)), so its output
+sampling. pydegas runs a program on Differentiable Gaussian Semantics (DeGAS,
+[https://doi.org/10.1007/978-3-032-22752-2_29](https://doi.org/10.1007/978-3-032-22752-2_29)), so its output
 distribution is a differentiable PyTorch function of the parameters.
 
 ## Documentation

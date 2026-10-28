@@ -55,7 +55,7 @@ Output:
 
 1. `compile_to_soga_text` turns `gauss(...)` into a Gaussian mixture term,
    `from_text` parses the program and `smooth` removes zero variances that
-   guards and densities cannot handle, see [Smoothing](concepts.md#smoothing).
+   would introduce non-differentiable terms, see [Smoothing](concepts.md#smoothing).
 2. `cfg.ID_list` is the order of the program's variables. The columns of
    `data` follow it: column 0 holds `x`, column 1 holds `y`.
 3. `OptimizationRun` uses Adam by default. Parameter values are passed without

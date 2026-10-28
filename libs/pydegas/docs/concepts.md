@@ -45,7 +45,7 @@ such as `b = bern(0.3);`, give components zero covariance matrices, introducing 
   assignments;
 - it widens guards on a variable assigned a number or a zero-variance `gm`,
   such as `bern(p)`, by δ = 5√ε: `v == c` becomes `c - δ < v < c + δ`, `v > c`
-  becomes `v > c + δ` and `v <= c` becomes `v <= c + δ`. 
+  becomes `v > c + δ` and `v <= c` becomes `v <= c + δ`.
   The value of δ is chosen to satisfy the consistency condition (see reference paper).
 
 Smooth a graph once. To use another ε, parse the program again.

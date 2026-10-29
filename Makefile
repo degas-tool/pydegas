@@ -3,7 +3,7 @@
 IMAGE := pydegas-artifact
 VENV := $(CURDIR)/libs/pydegas/.venv/bin
 
-.PHONY: image smoke replicate venv smoke-venv replicate-venv webapp webapp-docker webapp-docker-down
+.PHONY: image smoke replicate venv smoke-venv replicate-venv webapp webapp-docker webapp-docker-down clean clean-docker
 
 image:
 	docker build -f Dockerfile.artifact -t $(IMAGE) .
@@ -32,3 +32,10 @@ webapp-docker:
 
 webapp-docker-down:
 	bash scripts/web_app.sh down
+
+clean:
+	rm -rf results .uv-bin libs/pydegas/.venv libs/degas-api/.venv libs/degas-api/degas_sessions.db
+
+clean-docker:
+	COMPOSE_FILE=compose.yaml:compose.local.yaml docker compose down --volumes --rmi local
+	docker image rm -f $(IMAGE)

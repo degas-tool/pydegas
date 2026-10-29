@@ -47,7 +47,17 @@ is preinstalled on the VM and on macOS with the Xcode command line tools.
 | build | `make image` | `make venv` |
 | smoke test | `make smoke` | `make smoke-venv` |
 | reproduce the results | `make replicate` | `make replicate-venv` |
-| web application | `make webapp-docker`, `make webapp-docker-down` | `make webapp` |
+| web application | `make webapp-docker`, `make webapp-docker-down` | `make webapp` (stop with Ctrl+C) |
+| clean up | `make clean-docker` | `make clean` |
+
+`make clean` removes what the steps without Docker create in this directory
+(`results/`, the two virtual environments, the local uv binary `.uv-bin/` and
+the session database of the web application). `make clean-docker` stops the
+Docker Compose stack and removes its containers, volumes and images and the
+image `pydegas-artifact`. uv's download cache (`~/.cache/uv`) and the Python it
+downloaded (`~/.local/share/uv/python`) are outside this directory; remove them
+with `uv cache clean` and `uv python uninstall 3.12` (run `make clean` last, it
+removes `.uv-bin/uv`).
 
 ## 1. Build the image (once, about 5 minutes)
 

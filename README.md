@@ -111,7 +111,7 @@ docker run --rm pydegas-artifact python scripts/case_studies.py thermostat # C (
 
 ## 4. The web application degas.dev (Section 3.2, Fig. 3)
 
-Without Docker (also on the TACAS VM):
+Without Docker (also on the TACAS VM, which has Firefox):
 
 ```bash
 bash scripts/web_app_local.sh     # or: make webapp; then open http://localhost:3000
@@ -176,7 +176,8 @@ ball) are in the same menu. Tests of the web service: see
 ## Without Docker (e.g. on the TACAS VM)
 
 On the TACAS 2027 VM (Ubuntu, amd64 or arm64; Python and network access are
-available):
+available), unpack the archive in the home directory, not in a VirtualBox
+shared folder, where creating the virtual environments can fail:
 
 ```bash
 bash scripts/setup_venv.sh
@@ -206,7 +207,7 @@ interactively; `uv add pydegas` installs the released version from PyPI.
 | Windows 11 (WSL 2, 24 cores, 15 GB) | Ubuntu 24.04 | amd64 | `setup_venv.sh`, Python 3.12.3, PyTorch 2.12.0+cpu (no Docker) | smoke test and full `replicate.sh` |
 | Windows 11 with Docker Desktop (WSL 2 backend) | Debian 12 in the image (`python:3.12-slim-bookworm`) | amd64 | Docker, `Dockerfile.artifact`, Python 3.12.16, PyTorch 2.12.0+cpu | smoke test and full `replicate.sh` (about 39 minutes), all results as expected |
 | MacBook Pro 14" (Mac14,9), Apple M2 Pro (10 cores: 6 performance, 4 efficiency), 16 GB; Docker Desktop 24.0.5 with 5 CPUs and 8 GB assigned | macOS 26.6.2; Debian 12 in the image (`python:3.12-slim-bookworm`) | arm64 | Docker, `Dockerfile.artifact`, Python 3.12.16, PyTorch 2.12.0+cpu | smoke test (37 s) and full `replicate.sh` (16 minutes): B `155 passed`, C traces identical (`0.00e+00`); A converges one step earlier, `143 True 0.7830323576927185 {'gTh': 128.6864776611328, 'uHigh': 15.026304244995117}` (392 s); `compare_insulin.py`: max rel. diff to the Apple M2 Pro run `1.89e-05` (loss) and `8.31e-06` (parameters) over 144 steps |
-| `ubuntu:26.04` container on the same MacBook Pro, as a stand-in for the TACAS VM (no Docker, no `just` inside; system Python 3.14.4) | Ubuntu 26.04.1 LTS | arm64 | `make smoke-venv` (`setup_venv.sh` installs uv 0.13.5, which downloads Python 3.12.15), `make webapp` | smoke test passed (1:40 including the installation); the web application served the UI and the API |
+| TACAS 2027 VM (`TACAS27-AEC-arm64.ova`, Zenodo 10.5281/zenodo.23472158, default 2 CPUs and 8 GB) in VirtualBox 7.2.22 on the same MacBook Pro, user `tacas` | Ubuntu 26.04.1 LTS (system Python 3.14.4; no Docker, no `just`) | arm64 | archive unpacked in `/home/tacas`; `make venv` (`setup_venv.sh` installs uv 0.13.5, which downloads Python 3.12.15), `make smoke-venv`, `make replicate-venv`, `make webapp` | installation 39 s, smoke test 20 s, full `replicate.sh` 17 minutes: A `143 True 0.7830323576927185 {'gTh': 128.6864776611328, 'uHigh': 15.026304244995117}` (584 s), `compare_insulin.py` `1.89e-05` (loss) and `8.31e-06` (parameters); B `155 passed`; C traces identical (`0.00e+00`). Web application: UI served at http://localhost:3000; the InsulinPump example sent to the WebSocket API converged after 145 steps at `gTh` 128.595, `uHigh` 14.985, as in Appendix D (65 s) |
 | the same MacBook Pro, natively | macOS 26.6.2 | arm64 | `web_app_local.sh` (no Docker), Python 3.12 from uv | web application served (on port 3101 via `DEGAS_API_PORT`); the InsulinPump example sent to the WebSocket API converged after 145 steps at `gTh` 128.595, `uHigh` 14.985, as in Appendix D (70 s) |
 
 ## License

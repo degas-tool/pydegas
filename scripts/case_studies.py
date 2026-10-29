@@ -25,6 +25,7 @@ from pathlib import Path
 
 import torch
 
+
 ROOT = Path(__file__).resolve().parents[1]
 REF_SRC = ROOT / "reference" / "DeGAS" / "src"
 # programs of the bundled web examples (libs/degas-ui/src/examples.ts); they bound the

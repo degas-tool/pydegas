@@ -18,8 +18,10 @@ WORKDIR /artifact
 # pydegas with the exact dependency versions of uv.lock (incl. pytest), plus
 # matplotlib, which the reference implementation imports.
 COPY libs/pydegas libs/pydegas
-RUN cd libs/pydegas && uv sync --frozen \
+WORKDIR /artifact/libs/pydegas
+RUN uv sync --frozen \
  && uv pip install --python /opt/venv/bin/python matplotlib==3.11.2
+WORKDIR /artifact
 
 COPY reference reference
 COPY examples examples

@@ -18,6 +18,7 @@ from pydegas.optimize import OptimizationRun
 from pydegas.optimize.dsl import compile_loss, validate_loss
 from pydegas.parse.preprocessor import compile_to_soga_text
 
+
 program = """
 array[18] G;
 g = 110; x = 0;

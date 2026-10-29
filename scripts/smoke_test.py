@@ -2,13 +2,13 @@
 
 import platform
 
-import torch
-
 import pydegas
+import torch
 from pydegas.cfg import smooth
 from pydegas.cfg.builder import from_text
 from pydegas.optimize import OptimizationRun, get_loss
 from pydegas.parse.preprocessor import compile_to_soga_text
+
 
 print(f"python {platform.python_version()}  machine {platform.machine()}  torch {torch.__version__}")
 print(f"pydegas imported from {pydegas.__file__}")

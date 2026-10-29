@@ -73,6 +73,7 @@ repos:
     hooks:
       - id: hadolint
         args: [--failure-threshold, warning]
+        exclude: \.dockerignore$
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
     rev: 0.38.2

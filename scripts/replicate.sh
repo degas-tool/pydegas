@@ -6,8 +6,9 @@ cd "$(dirname "$0")/.."
 mkdir -p results
 
 echo "== A. Running example (Listing 1.1): insulin pump, Adam, 150 steps max =="
-echo "   expected: 'gTh' ~128.6, 'uHigh' ~15.0, loss ~0.782, converged around step 144"
-python examples/insulin_pump.py 2>&1 | tee results/insulin_pump.txt
+echo "   expected: 'gTh' ~128.6, 'uHigh' ~15.0, loss ~0.782, converged at step 144 (or 143, see README)"
+python examples/insulin_pump.py results/insulin_pump_trace.json 2>&1 | tee results/insulin_pump.txt
+python scripts/compare_insulin.py results/insulin_pump_trace.json 2>&1 | tee -a results/insulin_pump.txt
 
 echo "== B. Test suite incl. differential tests against the reference =="
 (cd libs/pydegas && python -m pytest -p no:cacheprovider -q) 2>&1 | tee results/tests.txt

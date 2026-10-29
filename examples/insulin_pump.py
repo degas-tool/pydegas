@@ -7,10 +7,15 @@ Expected end of the output (Listing 1.1, up to small numerical differences
 between platforms):
 
     144 True 0.7823... {'gTh': 128.59..., 'uHigh': 14.98...}
+
+Usage: python examples/insulin_pump.py [TRACE.json]; with TRACE.json, every step
+is also written there, for scripts/compare_insulin.py.
 """
 
+import json
 import sys
 import time
+from pathlib import Path
 
 from pydegas.cfg import smooth
 from pydegas.cfg.builder import from_text
@@ -70,9 +75,14 @@ run = OptimizationRun(
 )
 
 start = time.time()
+trace = []
 for r in run.run_generator(150):
     if r.step % 50 == 0 or r.converged:
         print(r.step, round(r.loss, 3), r.params)
+    trace.append({"step": r.step, "loss": r.loss, "params": r.params, "converged": r.converged})
     last = r
 print(last.step, last.converged, last.loss, last.params)
 print(f"wall clock: {time.time() - start:.1f} s", file=sys.stderr)
+
+if len(sys.argv) > 1:
+    Path(sys.argv[1]).write_text(json.dumps(trace))

@@ -423,7 +423,12 @@ export default function App() {
 
   function handleSelectExample(ex: Example) {
     setProgram(ex.program);
-    setLossMode("builtin");
+    if (ex.loss_source !== undefined) {
+      setLossSource(ex.loss_source);
+      setLossMode("custom");
+    } else {
+      setLossMode("builtin");
+    }
   }
 
   const downloadBlocker =

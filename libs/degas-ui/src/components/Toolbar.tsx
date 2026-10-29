@@ -304,6 +304,9 @@ export function Toolbar({
     setLossKwargs(stringify(ex.loss_kwargs));
     setParamValues(stringify(ex.initial_params));
     setNSteps(String(ex.n_steps));
+    if (ex.tolerance !== undefined) setTolerance(String(ex.tolerance));
+    if (ex.patience !== undefined) setPatience(String(ex.patience));
+    if (ex.loss_bindings) setDslBindings(stringify(ex.loss_bindings));
     setTrajShapes({});
     onSelectExample(ex);
   }

@@ -89,11 +89,15 @@ field: [request](../../degas-api/docs/endpoints.md#request).
 | Gearbox | `_s1` 8, `_s2` 12 | `signal_error` | `target` 15, `time_steps` 21 | 0.3 | 200 |
 | PID | `_s0` 46, `_s1` −23, `_s2` 0 | `signal_error` | `target` 3.14, `time_steps` 51 | 0.2 | 500 |
 | BouncingBall | `_R` −1, `_C` 450 | `l2_distance` | upload `bouncing_ball_trajectories.csv` | 0.8 | 100 |
+| InsulinPump | `_gTh` 150, `_uHigh` 20 | custom `glycemic_risk` | `idx` 0 to 17, `k` 2, `w` 2 | 0.15 | 150 |
 
-All use Adam and `kmeans` pruning. Selecting an example sets the program,
-optimizer, lr, pruning, the built-in loss (leaving custom mode), loss
-arguments, initial parameters and steps; tol, patience and smooth_eps keep
-their current values. Editing the program switches the selector to Custom.
+All use Adam. Selecting an example sets the program, optimizer, lr, pruning,
+loss, loss arguments, initial parameters and steps. InsulinPump switches to
+custom mode with its DeGASLoss objective, uses `classic` pruning and sets tol
+0.001 and patience 10. The others select a built-in loss (leaving custom mode)
+and use `kmeans` pruning; tol and patience keep their current values.
+smooth_eps always keeps its current value. Editing the program switches the
+selector to Custom.
 
 ## Running and results
 

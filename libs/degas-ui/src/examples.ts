@@ -6,10 +6,14 @@ export interface Example {
   initial_params: Record<string, number>;
   loss_function: string;
   loss_kwargs: Record<string, unknown>;
+  loss_source?: string;
+  loss_bindings?: Record<string, unknown>;
   n_steps: number;
   optimizer: string;
   optimizer_kwargs: { lr: number };
   pruning: Pruning;
+  tolerance?: number;
+  patience?: number;
 }
 
 export const EXAMPLES: Example[] = [
@@ -239,5 +243,57 @@ H[35] = currH;`,
     optimizer: "Adam",
     optimizer_kwargs: { lr: 0.8 },
     pruning: "kmeans",
+  },
+  {
+    label: "InsulinPump",
+    program: `/* Insulin pump — Bergman minimal model with a threshold controller
+ * Learn the glucose threshold _gTh and the extra insulin dose _uHigh.
+ */
+
+array[18] G;
+
+g = 110;
+x = 0;
+q = gauss(80., 20.);
+
+for i in range(18) {
+    cgm = g + gauss(0., 6.);
+    if cgm > _gTh {
+        u = _uHigh;
+    } else {
+        if cgm < 80 {
+            u = -15;
+        } else {
+            u = 0;
+        } end if;
+    } end if;
+    xg = x * g;
+    g = 0.72*g - 10*xg + 0.15*q + 30.8 + gauss(0., 2.);
+    x = 0.75*x + 0.00013*u;
+    q = 0.85*q;
+    G[i] = g;
+} end for;`,
+    initial_params: { gTh: 150.0, uHigh: 20.0 },
+    loss_function: "l2_distance",
+    loss_kwargs: {},
+    loss_source: `loss glycemic_risk(d: dist, idx: index_list, k: scalar, w: scalar) =
+    m = d.mean[idx];
+    s = sqrt(d.var[idx]);
+    lo = 1.509 * (log(m - k*s) ^ 1.084 - 5.381);
+    hi = 1.509 * (log(m + k*s) ^ 1.084 - 5.381);
+    low_risk  = 10 * ((abs(lo) - lo) / 2) ^ 2;
+    high_risk = 10 * ((abs(hi) + hi) / 2) ^ 2;
+    mean_agg(w * low_risk + high_risk)`,
+    loss_bindings: {
+      idx: Array.from({ length: 18 }, (_, i) => i).join(", "),
+      k: 2,
+      w: 2,
+    },
+    n_steps: 150,
+    optimizer: "Adam",
+    optimizer_kwargs: { lr: 0.15 },
+    pruning: "classic",
+    tolerance: 1e-3,
+    patience: 10,
   },
 ];

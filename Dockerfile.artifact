@@ -1,9 +1,9 @@
 # Image for evaluating the pydegas artifact (library, tests, case studies).
 # Multi-architecture: builds natively on linux/amd64 and linux/arm64
 # (the locked CPU-only PyTorch wheels exist for both).
-FROM python:3.12-slim-bookworm
+FROM python:3.12.16-slim-bookworm@sha256:e697c81897302a4c4333bade000d98038fbb21eb064f8ee1fd42d02ebcd9d337
 
-COPY --from=astral/uv:0.11 /uv /uvx /bin/
+COPY --from=astral/uv:0.11.33@sha256:77280f2f771df71f90786c314fe1bbc1e023feac652969bbf139c280babf2eb7 /uv /uvx /bin/
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \

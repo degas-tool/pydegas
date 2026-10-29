@@ -1,7 +1,12 @@
 # Local development overlay: the production deployment puts Caddy in front of
 # the ui and api containers. This mounts an nginx configuration that performs
 # the same routing so the browser can reach the API at http://localhost:3000.
+# For the artifact it also raises the Kmax and run time limits of the API.
 services:
+  api:
+    environment:
+      DEGAS_API_OPTIMIZATION_LIMITS__MAX_KMAX: "1000"
+      DEGAS_API_OPTIMIZATION_LIMITS__MAX_RUN_SECONDS: "3600"
   ui:
     depends_on:
       - api

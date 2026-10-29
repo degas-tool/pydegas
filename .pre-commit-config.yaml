@@ -5,6 +5,7 @@ exclude: |
       reference/
     | libs/pydegas/src/pydegas/parse/(soga|asgmt|trunc|degas-loss)/
     | libs/degas-ui/public/plotly\.js$
+    | libs/degas-ui/dist/
   )
 
 repos:

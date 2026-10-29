@@ -222,3 +222,7 @@ __marimo__/
 *.db
 *.db-shm
 *.db-wal
+
+# artifact outputs
+results/
+.uv-bin/

@@ -7,10 +7,10 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+export PATH="$PWD/.uv-bin:$PATH"
 if ! command -v uv > /dev/null; then
   echo "installing uv 0.13.5 into .uv-bin"
   curl -LsSf https://astral.sh/uv/0.13.5/install.sh | UV_UNMANAGED_INSTALL="$PWD/.uv-bin" sh
-  export PATH="$PWD/.uv-bin:$PATH"
 fi
 
 cd libs/pydegas

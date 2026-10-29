@@ -1,0 +1,22 @@
+array[40] z0;
+array[40] z1;
+
+z0curr = 0.;
+z1curr = 0.;
+
+for i in range(40){
+
+    z0[i] = z0curr + 0.000005 * z1curr;
+    prod = _RL*z1curr;
+    prod1 = _LC*z0[i];
+    z1[i] = z1curr + 0.000005 * _VL - 0.000005 * prod - 0.000005 * prod1;
+    
+    z0curr = z0[i];
+    z1curr = z1[i];
+
+} end for; 
+
+for i in range(40){
+    z0[i] = z0[i] + gm([1.], [0.], [0.000000001]);
+    z1[i] = z1[i] + gm([1.], [0.], [0.0001]);
+} end for;

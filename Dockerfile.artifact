@@ -1,0 +1,29 @@
+# Image for evaluating the pydegas artifact (library, tests, case studies).
+# Multi-architecture: builds natively on linux/amd64 and linux/arm64
+# (the locked CPU-only PyTorch wheels exist for both).
+FROM python:3.12-slim-bookworm
+
+COPY --from=astral/uv:0.11 /uv /uvx /bin/
+
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_PYTHON_DOWNLOADS=never \
+    UV_PROJECT_ENVIRONMENT=/opt/venv \
+    PATH=/opt/venv/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    MPLBACKEND=Agg
+
+WORKDIR /artifact
+
+# pydegas with the exact dependency versions of uv.lock (incl. pytest), plus
+# matplotlib, which the reference implementation imports.
+COPY libs/pydegas libs/pydegas
+RUN cd libs/pydegas && uv sync --frozen \
+ && uv pip install --python /opt/venv/bin/python matplotlib==3.11.2
+
+COPY reference reference
+COPY examples examples
+COPY scripts scripts
+COPY LICENSE README.md ./
+
+CMD ["bash"]

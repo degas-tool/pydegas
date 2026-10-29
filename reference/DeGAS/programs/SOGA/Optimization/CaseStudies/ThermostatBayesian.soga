@@ -1,0 +1,44 @@
+array[11] T;
+
+currT = 17;             
+isOn = -1;       
+
+/*
+tOn = gm([1.], [16.], [0.1]);
+tOff = gm([1.], [22.], [0.1]);
+*/
+
+tOn = 16.;
+tOff = 22.;
+
+for i in range(11) {
+
+    T[i] = currT;           
+
+    /* Temperature update */
+    if isOn > 0 {
+        newT = 0.99*currT + 0.5 + gauss(0., 0.5);
+    } else {
+        newT = 0.99*currT + gauss(0., 0.5);
+    } end if;
+
+    currT = newT;         
+
+    /* Check on thermostat */
+    if isOn > 0 {
+        if newT - tOff > 0 {
+            isOn = -1;          
+        } else {
+            skip;
+        } end if;
+    } else {
+        if newT - tOn < 0 {
+            isOn = 1;          
+        } else {
+            skip;
+        } end if;
+    } end if;
+
+} end for;
+
+T[10] = currT;         

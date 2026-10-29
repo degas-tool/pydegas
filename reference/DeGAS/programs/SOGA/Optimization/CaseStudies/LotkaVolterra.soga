@@ -1,0 +1,24 @@
+array[30] x;
+array[30] y;
+
+xcurr = 20.;
+ycurr = 20.;
+
+for i in range(30){
+
+    prod = xcurr * ycurr;
+    prod1 = _beta * prod;
+    prod2 = _alpha * xcurr;
+
+    x[i] = xcurr + 0.1 * prod2 - 0.1 * prod1;
+    y[i] = 0.7 * ycurr + 0.1 * prod1;
+
+    xcurr = x[i];
+    ycurr = y[i];
+
+} end for; 
+
+for i in range(30){
+    x[i] = x[i] + gm([1.], [0.], [10]);
+    y[i] = y[i] + gm([1.], [0.], [10]);
+} end for;

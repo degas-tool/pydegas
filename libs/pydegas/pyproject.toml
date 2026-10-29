@@ -66,6 +66,8 @@ exclude = ["*.interp", "*.tokens"]
 testpaths = ["tests"]
 addopts = ["-ra", "--strict-markers", "--strict-config"]
 markers = ["reference: compares against the DeGAS reference implementation in reference/DeGAS"]
+# botorch -> gpytorch -> linear_operator call torch.jit.script on import (not pydegas code)
+filterwarnings = ["ignore:.*torch.jit.script.*:DeprecationWarning"]
 
 [tool.mypy]
 python_version = "3.12"

@@ -1,0 +1,40 @@
+array[50] z0;
+array[50] z1;
+array[50] integ;
+
+z0curr = 0.;
+z1curr = 0.;
+icurr = 0.;
+
+for i in range(50){
+
+    e = 1. - z0curr;
+    uc = _Kp * e;
+    uc = uc + _Ki * icurr;
+    
+    if uc > 10.{
+        V0 = 10.;
+    } else{
+        if uc < -10. {
+            V0 = -10.;
+        } else {
+            V0 = uc;
+        } end if;
+    } end if;
+
+    z0[i] = z0curr + 0.01 * z1curr;
+    prod = _RL*z1curr;
+    prod1 = _LC*z0[i];
+    prod2 = _L * V0;
+    z1[i] = z1curr + 0.01 * prod2 - 0.01* prod - 0.01 * prod1;
+
+    prod3 = _kaw * V0;
+    prod4 = _kaw * uc;
+
+    integ[i] = icurr + 0.01 * e + 0.01 * prod3 - 0.01 * prod4;
+    
+    z0curr = z0[i];
+    z1curr = z1[i];
+    icurr = integ[i];
+
+} end for; 

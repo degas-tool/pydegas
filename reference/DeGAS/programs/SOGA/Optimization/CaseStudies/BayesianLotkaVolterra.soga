@@ -1,0 +1,28 @@
+array[30] x;
+array[30] y;
+
+xcurr = 20.;
+ycurr = 20.;
+
+alpha = gm([1.], [_mAlpha], [_stdAlpha]);
+beta = gm([1.], [_mBeta], [_stdBeta]);
+
+for i in range(30){
+
+    prod = xcurr * ycurr;
+    prod1 = beta * prod;
+    prod2 = alpha * xcurr;
+
+    x[i] = xcurr + 0.1 * prod2 - 0.1 * prod1;
+    y[i] = 0.7 * ycurr + 0.1 * prod1;
+
+    xcurr = x[i];
+    ycurr = y[i];
+
+} end for; 
+
+
+for i in range(30){
+    x[i] = x[i] + gm([1.], [0.], [5.]);
+    y[i] = y[i] + gm([1.], [0.], [5.]);
+} end for;

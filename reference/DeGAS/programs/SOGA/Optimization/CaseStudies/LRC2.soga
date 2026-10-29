@@ -1,0 +1,18 @@
+array[50] z0;
+array[50] z1;
+
+z0curr = 0.;
+z1curr = 0.;
+
+for i in range(50){
+
+    z0[i] = z0curr + 0.000005 * z1curr;
+    prod = _RL*z1curr;
+    prod1 = _LC*z0[i];
+    prod2 = _L * _V0;
+    z1[i] = z1curr + 0.000005 * prod2 - 0.000005 * prod - 0.000005 * prod1;
+    
+    z0curr = z0[i];
+    z1curr = z1[i];
+
+} end for; 

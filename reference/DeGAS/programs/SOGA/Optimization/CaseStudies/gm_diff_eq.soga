@@ -1,0 +1,14 @@
+array[10] x;
+array[10] y;
+
+xcurr = 20.;
+ycurr = 20.;
+
+for i in range(10){
+    x[i] = xcurr + 0.1 * gm([_w1, _w2], [_mu1, _mu2], [_s1, _s2]);
+    y[i] = ycurr + 0.1 * gm([_w1, _w2], [_mu1, _mu2], [_s1, _s2]);
+
+    xcurr = x[i];
+    ycurr = y[i];
+
+} end for; 
